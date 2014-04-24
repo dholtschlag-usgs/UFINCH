@@ -26,6 +26,7 @@ for i = 1:lenLevelPathSet
             num2str(LevelPathSet(i).CumTT(j),'%03d'),') = Ylds(t-',...
             num2str(LevelPathSet(i).CumTT(j),'%03d'),') * ',...
             num2str(LevelPathSet(i).AreaSqKm(j),'%7.2f')]) ;
+        fprintf(1,'%s \n',FlowEqn{i,j});
     end
 end
 % 
@@ -46,8 +47,10 @@ fprintf(1,'%s\n',['  The corresponding FromNode is ',tarFromNode,'.']);
 % Find the target node in all ToNode
 ToNodeSet = horzcat({LevelPathSet.ToNode});
 % Find the target node in all ToNode
+% j = 2
 FlowEqnBld = FlowEqn{1,2};
-for k = 1:14
+for k = [find(vecLevelPathSet >= 2)]'
+    fprintf(1,'%d \n',k);
     ndx0 = find(strcmp(tarFromNode,ToNodeSet{k}(1:end))==1);
     if ~isempty(ndx0)
         fprintf(1,'ToNode in cell %d, element %d matches FromNode %s\n',k,ndx0,tarFromNode);
@@ -57,19 +60,26 @@ end
 FlowEqn(1,2) = cellstr(FlowEqnBld);
 %
 
+% Write code to determine which rows of LevelPathSet have from 2 to
+% max(vecLevelPathSet) columns
+for i = 2:max(vecLevelPathSet)
+    FlowEqn{i,2}
+    ndxLong = find(vecLevelPathSet >= i);
+    ndxTar  = 
+    dmat    = repmat('%d ',1,length(ndxLong));
+    fprintf(1,strcat(dmat,' \n'),ndxLong);
+end
 
 
 
+for i = 2:max(vecLevelPathSet)
+    for j = [find(vecLevelPathSet >= i) ]
+        fprintf(1,'%d %d %d \n',i,j,vecLevelPathSet(j));
+    end
+end
 
-% j indexes the "column" in the cell array Experiment with matching ToNode and FromNode
-j = 2;
-for i = 1:length(ndxLong)
-    ndxFromNode = find(strcmp(tarFromNode,{LevelPathSet(i).FromNode{:}}) == 1);
 
-% target from node
-tarFromNode = LevelPathSet(1).FromNode(j); 
-% 
-FlowEqn{1,1}(1:cell2mat(strfind(FlowEqn(1,1),'='))-1)
+
 
 
 
