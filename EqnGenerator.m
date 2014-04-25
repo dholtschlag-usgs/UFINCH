@@ -28,6 +28,14 @@ for i = 1:numBrLPS
 end
 % Compute the cumulative sum of flowlines in the branches
 cumFlowLineBr        = cumsum(numFlowLineBr); 
+% Create a structure array to hold equations
+field1    = 'FloEqn'; value1 = cell(cumFlowLineBr(end),1); 
+field2    = 'CumTT';  value2 =  nan(cumFlowLineBr(end),1);
+strFloEqn = struct(field1,value1,field2,value2);
+celFloEqn =   cell(cumFlowLineBr(end),2);
+%
+% Initialize counter for equations 
+nEqn = 0;
 % Generate the equations for all flowlines
 for i = 1:numBrLPS
     % Print the branch number and headwater ComID
@@ -39,8 +47,13 @@ for i = 1:numBrLPS
             '(t-',num2str(LevelPathSet(i).CumTT(1),'%03d'),') = Ylds(t-',...
             num2str(LevelPathSet(i).CumTT(1),'%03d'),') * ',...
             num2str(LevelPathSet(i).AreaSqKm(1),'%8.3f')];
+            nEqn = nEqn + 1;        
+            fprintf(1,'nEqn = %03d:  ',nEqn);
+            strFloEqn(nEqn).FloEqn = FlowBldEqn;
+            strFloEqn(nEqn).CumTT  = LevelPathSet(i).CumTT(1);
+            celFloEqn{nEqn,1}      = FlowBldEqn;
+            celFloEqn{nEqn,2}      = LevelPathSet(i).CumTT(1);
             fprintf(1,'%s \n',[FlowBldEqn,';']);
-
     % Add info on any upstream flowlines
     for j = 2:numFlowLineBr(i)
         % Set current FromNode to targetToNode
@@ -69,11 +82,21 @@ for i = 1:numBrLPS
                 '(t-',num2str(LevelPathSet(numBr).CumTT(numFL),'%03d'),...
                 ')']);
         end
+        nEqn = nEqn + 1;
+        fprintf(1,'nEqn = %03d:  ',nEqn);
         fprintf(1,'%s \n',[FlowBldEqn,';']);
+        strFloEqn(nEqn).FloEqn = FlowBldEqn;
+        strFloEqn(nEqn).CumTT  = LevelPathSet(numBr).CumTT(numFL);
+        celFloEqn{nEqn,1}      = FlowBldEqn;
+        celFloEqn{nEqn,2}      = LevelPathSet(numBr).CumTT(numFL);
     end
 end
-
-
-
-
+% Put cumTT in numeric vector for sorting
+cumTTvec = [celFloEqn{:,2}]';
+% Sort cumTTvec
+[~,srtTTvec] = sort(cumTTvec,'descend');
+% Print the equations in the appropriate order to the terminal
+for i = 1:nEqn
+    fprintf(1,'%s \n',celFloEqn{srtTTvec(i),1});
+end
 
