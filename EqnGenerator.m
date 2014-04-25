@@ -60,26 +60,59 @@ end
 FlowEqn(1,2) = cellstr(FlowEqnBld);
 %
 
-% Write code to determine which rows of LevelPathSet have from 2 to
+%% Write code to determine which rows of LevelPathSet have from 2 to
 % max(vecLevelPathSet) columns
 for i = 2:max(vecLevelPathSet)
-    FlowEqn{i,2}
+    % FlowEqn{i,2}
     ndxLong = find(vecLevelPathSet >= i);
-    ndxTar  = 
+    %ndxTar  = 
     dmat    = repmat('%d ',1,length(ndxLong));
     fprintf(1,strcat(dmat,' \n'),ndxLong);
 end
 
 
-
+%% Streams with one or more upstream branches
+% Create cell array containing all ToNodes 
+ToNodeSet = horzcat({LevelPathSet.ToNode});
+%
 for i = 2:max(vecLevelPathSet)
-    for j = [find(vecLevelPathSet >= i) ]
-        fprintf(1,'%d %d %d \n',i,j,vecLevelPathSet(j));
-    end
+    %for j = [find(vecLevelPathSet >= i) ]
+    for j = 1:lenLevelPathSet
+        fprintf(1,'i = %d j = %d \n',i,j);
+        FlowEqnBld  = FlowEqn{j,i};
+        tarFromNode = LevelPathSet(j).FromNode{i};
+        ndx0        = find(strcmp(tarFromNode,ToNodeSet{j}(1:end))==1);
+        if ~isempty(ndx0)
+            fprintf(1,'ToNode in cell %d, element %d matches FromNode %s\n',j,ndx0,tarFromNode);
+            FlowEqnBld = [FlowEqnBld,' + ',FlowEqn{j,ndx0}(1:cell2mat(strfind(FlowEqn(j,ndx0),'='))-1)];
+            fprintf(1,'%s \n',FlowEqnBld);
+        end       
+    end    
+    fprintf(1,'%s \n',FlowEqnBld);
 end
 
 
+fprintf(1,'%s\n',['The index of the first branch is ',num2str(ndxLong(i)),'.']);
+tarFromNode = LevelPathSet(ndxLong(i)).FromNode{j};
+fprintf(1,'%s\n',['  The corresponding FromNode is ',tarFromNode,'.']);
 
+ToNodeSet = horzcat({LevelPathSet.ToNode});
+%
+for i = 2:max(vecLevelPathSet)
+    %for j = [find(vecLevelPathSet >= i) ]
+    for j = 1:lenLevelPathSet
+        fprintf(1,'i = %d j = %d \n',i,j);
+        FlowEqnBld  = FlowEqn{j,i};
+        tarFromNode = LevelPathSet(j).FromNode{i};
+        ndx0        = find(strcmp(tarFromNode,ToNodeSet{j}(1:end))==1);
+        if ~isempty(ndx0)
+            fprintf(1,'ToNode in cell %d, element %d matches FromNode %s\n',j,ndx0,tarFromNode);
+            FlowEqnBld = [FlowEqnBld,' + ',FlowEqn{j,ndx0}(1:cell2mat(strfind(FlowEqn(j,ndx0),'='))-1)];
+            fprintf(1,'%s \n',FlowEqnBld);
+        end       
+    end    
+    fprintf(1,'%s \n',FlowEqnBld);
+end
 
 
 
