@@ -92,7 +92,10 @@ for i = 1:numBrLPS
     end
 end
 % Put cumTT in numeric vector for sorting
-cumTTvec = [celFloEqn{:,2}]';
+cumTTvec        = nan(nEqn,1);
+for i = 1:nEqn
+    cumTTvec(i) = str2num(celFloEqn{i,1}(12:14));
+end
 % Sort cumTTvec
 [~,srtTTvec] = sort(cumTTvec,'descend');
 % Print the equations in the appropriate order to the terminal
