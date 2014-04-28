@@ -6,7 +6,14 @@
 hUFinchGUI    = getappdata(0,'hUFinchGUI');
 info          = getappdata(hUFinchGUI);
 LevelPathSet  = info.LevelPathSet; 
-
+% aCatch, tDelay, seqComID are consistent nEqn x 1 vectors
+aCatch        = info.aCatch;
+tDelay        = info.tDelay;
+seqComID      = info.seqComID;
+Ylds          = info.Ylds;
+nSim          = info.nSim;
+maxTTime      = info.maxTTime;
+% nEqn          = info.nEqn;
 % Compute the length (number of branches) of the LevelPathSet
 lenLevelPathSet = length(LevelPathSet);
 % Allocate a vector containing the number of flowlines in each branch
@@ -93,13 +100,59 @@ for i = 1:numBrLPS
 end
 % Put cumTT in numeric vector for sorting
 cumTTvec        = nan(nEqn,1);
+ndxParan        = nan(nEqn,1);
+cumComID        = nan(nEqn,1);
+% Run through all flowlines
 for i = 1:nEqn
     cumTTvec(i) = str2num(celFloEqn{i,1}(12:14));
+    vecMatch    = strfind(celFloEqn{i,1},'(');
+    % Find the first close paraenthesis around 
+    ndxParan(i) = vecMatch(1);
+    cumComID(i) = str2num(celFloEqn{i,1}(2:ndxParan(i)-1));
 end
-% Sort cumTTvec
-[~,srtTTvec] = sort(cumTTvec,'descend');
+% Sort cumTTvec 
+[~,srtEqn] = sort(cumTTvec,'descend');
+celComID   = nan(nEqn,1);
 % Print the equations in the appropriate order to the terminal
 for i = 1:nEqn
-    fprintf(1,'%s \n',celFloEqn{srtTTvec(i),1});
+    vecMatch    = strfind(celFloEqn{srtEqn(i),1},'(');
+    % Find the first close paraenthesis around 
+    ndxParan(i) = vecMatch(1);
+    celComID(i) = str2num(celFloEqn{srtEqn(i),1}(2: ndxParan(1)-1));
+    fprintf(1,'%s \n',celFloEqn{srtEqn(i),1});
 end
+% ib is the index sequence that match seqComID, aCatch, and tDelay to
+% ordered equations needed to compute flow
+[c, ia, ib] = intersect(celComID,seqComID,'stable');
+% seqComID(ib)
+% This substitutes equation numbers for ComID
+%
+%% Compute local inflows
+for i = 1:nEqn
+    fprintf(1,'%s \n',['R',num2str(seqComID(ib(i))),'(t-',...
+        num2str(tDelay(ib(i)),'%03d'),') = Ylds(t-',...
+        num2str(tDelay(ib(i)),'%03d'),') * ',...
+        num2str(aCatch(ib(i)),'%7.3f'),' ']);
+end
+%
+%% Initialize variables to contain flow
+for i = 1:nEqn
+    eval(['C',num2str(seqComID(ib(i))),' = zeros(nSim,1)']);
+end
+% Ylds = 0.1*ones(500,1);
+% Print the equations in the appropriate order to the terminal
+for t = 1+maxTTime:nSim,
+    for i = 1:nEqn,
+        vecMatch    = strfind(celFloEqn{srtEqn(i),1},'(');
+        % Find the first close paraenthesis around
+        ndxParan(i) = vecMatch(1);
+        celComID(i) = str2num(celFloEqn{srtEqn(i),1}(2: ndxParan(1)-1));
+        % fprintf(1,'%s \n',celFloEqn{srtEqn(i),1});
+        eval(celFloEqn{srtEqn(i),1});
+    end
+end
+
+
+
+
 
