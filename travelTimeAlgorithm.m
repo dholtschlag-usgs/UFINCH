@@ -11,7 +11,7 @@ nhdMatrix = importdata([pname,fname]);
 % Identify column contents by header
 ndxComID = find(strncmpi(nhdMatrix.colheaders,'ComID',     length('ComID')));
 ndxLenKm = find(strncmpi(nhdMatrix.colheaders,'LengthKm',  length('LengthKm')));
-ndxSlevl = find(strncmpi(nhdMatrix.colheaders,'StreamLeve',length('StreamLeve')));
+ndxSorde = find(strncmpi(nhdMatrix.colheaders,'StreamOrde',length('StreamOrde')));
 ndxFNode = find(strncmpi(nhdMatrix.colheaders,'FromNode',  length('FromNode')));
 ndxTNode = find(strncmpi(nhdMatrix.colheaders,'ToNode',    length('ToNode')));
 ndxHSequ = find(strncmpi(nhdMatrix.colheaders,'HydroSeq',  length('HydroSeq')));
@@ -19,7 +19,6 @@ ndxLPath = find(strncmpi(nhdMatrix.colheaders,'LevelPathI',length('LevelPathI'))
 ndxAreaM = find(strncmpi(nhdMatrix.colheaders,'AreaSqKm',  length('AreaSqKm')));
 ndxV001C = find(strncmpi(nhdMatrix.colheaders,'V0001C',    length('V0001C')));
 ndxV001E = find(strncmpi(nhdMatrix.colheaders,'V0001E',    length('V0001E')));
-ndxUpLPa = find(strncmpi(nhdMatrix.colheaders,'UpLevelPat',length('UpLevelPat')));
 % Replace data structure with data.
 nhdMatrix           = nhdMatrix.data;
 % Sort rows of A by HydroSeq in decreasing (-) order.
@@ -35,12 +34,11 @@ V0001E     = nhdMatrix(:, ndxV001E);
 % MaVelU is the mean velocity metric selected 
 MaVelU      = nhdMatrix(:, ndxV001C);
 % 
-StreamLeve = nhdMatrix(:, ndxSlevl);
+StreamOrde = nhdMatrix(:, ndxSorde);
 FromNode   = nhdMatrix(:, ndxFNode);
 ToNode     = nhdMatrix(:, ndxTNode);
 HydroSeq   = nhdMatrix(:, ndxHSequ);
 LevelPathI = nhdMatrix(:, ndxLPath);
-UpLevelPat = nhdMatrix(:, ndxUpLPa);
 %
 %% Compute travel times in flowlines, branches, and network
 % Compute travel times for each flowline
@@ -75,7 +73,7 @@ nBranch = length(unique(LevelPathI));
 fprintf(1,'%s \n',['There are ',num2str(nBranch),' branches in the ',fname,' network.']);
 %
 % Allocate vector for branch and reach identifiers
-branchID      = nan(nBranch,2);
+branchID      = nan(nBranch,3);
 % Allocate vector for cum
 ttBranch      = zeros(nFlowlines,1);
 % Initialize branch as first LevelPathI
@@ -83,14 +81,16 @@ j             =  1;
 iBranch       =  LevelPathI(j);
 ttBranch(j)   =  ttFlowline(j);
 branchID(j,1) =  1;  % First Branch
-branchID(j,2) =  1;  % First Flowline
+branchID(j,2) =  1;  % First Flowline of Branch
+branchID(j,3) =  1;  % First Flowline
 % Print header for branch output
-ndash = 75;
+ndash = 82;
 fprintf(1,'%s \n',repmat('-',1,ndash));
-fprintf(1,'%s \n','  Branch     Branch    Flowline  Flowline  Flowline travel-  Branch travel- ');
-fprintf(1,'%s \n',' sequence      ID      sequence   ComID     time (15-min)    time (15-min)  ');
+fprintf(1,'%s \n','  Flowline   Branch   Branch  Sequence  Flowline  Flowline travel-  Branch travel- ');
+fprintf(1,'%s \n','  sequence  sequence    ID    in Branch   ComID     time (15-min)    time (15-min)  ');
 fprintf(1,'%s \n',repmat('-',1,ndash));
-fprintf(1,'%6u   %12u  %5u  %10u    %12.4f    %12.4f \n',branchID(j,1),LevelPathI(j),branchID(j,2),ComID(j),ttFlowline(j),ttBranch(j));
+fprintf(1,'%6u   %6u   %12u  %5u  %10u    %12.4f    %12.4f \n',j, branchID(j,1),...
+    LevelPathI(j),branchID(j,2),ComID(j),ttFlowline(j),ttBranch(j));
 for j = 2:nFlowlines
     if (iBranch       == LevelPathI(j))
         ttBranch(j)   =  ttBranch(j-1) + ttFlowline(j);        
@@ -103,13 +103,83 @@ for j = 2:nFlowlines
         branchID(j,1) = branchID(j-1) + 1;
         branchID(j,2) = 1; 
     end
-    fprintf(1,'%6u   %12u  %5u  %10u    %12.4f    %12.4f \n',branchID(j,1),LevelPathI(j),branchID(j,2),ComID(j),ttFlowline(j),ttBranch(j));
+    branchID(j,3) =  j;
+    fprintf(1,'%6u   %6u   %12u  %5u  %10u    %12.4f    %12.4f \n',j, branchID(j,1),...
+        LevelPathI(j),branchID(j,2),ComID(j),ttFlowline(j),ttBranch(j));
 
 end
 fprintf(1,'%s \n',repmat('-',1,ndash));
+%
+%% Compute travel times in the network by connecting branches
+% Initially set the travel times in the network to that of the branches
+ttNetwork = ttBranch; 
+% Find the k = 2nd order streams in the network
+% Find the indices of the branches most downstream flowline
+ndxBrStrt = find(branchID(:,2) == 1);
+% Update travel times in the ttNetwork
+for i = 1:nBranch
+    % Find the index of the flowline whose FromNode matches the most
+    % downstream flowline ToNode in the branch 
+    ndxFromNode = find(ToNode(ndxBrStrt(i)) == FromNode);
+    if ~isempty(ndxFromNode)
+        ndxAdd = find(branchID(:,1) == i);
+        ttNetwork(ndxAdd) = ttNetwork(ndxAdd) + ttBranch(ndxFromNode); 
+    end
+%     fprintf(1,'%5u %5u %12u %10.4f \n',ndxBrStrt(i), branchID(ndxBrStrt(i),1),...
+%         ToNode(ndxBrStrt(i)), ttBranch(ndxFromNode));
+end
+%
+%% Print out travel times in flowlines, branches, and the network
+ndash = 110;
+fprintf(1,'%s \n',repmat('-',1,ndash));
+fprintf(1,'%s \n','  Branch     Branch    Branch-   Flowline  Flowline  Flowline travel-  Branch travel-  Network travel-  Stream ');
+fprintf(1,'%s \n',' sequence      ID      flowline  sequence   ComID     time (15-min)    time (15-min)    time (15-min)   order ' );
+fprintf(1,'%s \n',repmat('-',1,ndash));
+for j = 1:nFlowlines
+    fprintf(1,'%6u   %12u %5u     %5u   %10u    %12.4f    %12.4f     %11.4f  %8u \n',...
+        branchID(j,1),LevelPathI(j),branchID(j,2),j,ComID(j),...
+        ttFlowline(j),ttBranch(j),ttNetwork(j),StreamOrde(j));
+end
+fprintf(1,'%s \n',repmat('-',1,ndash));
+%
+%% Update ttNetworks in downstream order
+% Just print some stuff out about the branches
+ndxBrBase = find(branchID(:,2) == 1);
 
-
-
+brOrder   = nan(nBranch,2); 
+for i = 1:nBranch,
+    brOrder(i,1) = StreamOrde(ndxBrBase(i));
+    brOrder(i,2) = branchID(ndxBrBase(i),3);
+    fprintf(1,'%5u %5u %5u %5u \n',ndxBrBase(i),branchID(ndxBrBase(i),1),...
+        brOrder(i,1),brOrder(i,2));
+end
+%
+[~,ndx] = sort(brOrder,'descend');
+% Initially set the travel times in the network to that of the branches
+ttNetwork = ttBranch; 
+%
+for i = 1:nBranch,
+    fprintf(1,'%5u \s',i, ndx(i), ComID(
+    ndxFromNode = find(ToNode(ndx(i)) == FromNode);
+    if ~isempty(ndxFromNode)
+        ndxAdd = find(branchID(:,1) == ndx(i));
+        ttNetwork(ndxAdd) = ttNetwork(ndxAdd) + ttBranch(ndxFromNode); 
+    end
+%     fprintf(1,'%5u %5u %5u\n',ndxBrBase(i),branchID(ndxBrBase(i),1),...
+%         brOrder(i));
+end
+%
+ndash = 110;
+fprintf(1,'%s \n',repmat('-',1,ndash));
+fprintf(1,'%s \n','  Branch     Branch    Branch-   Flowline  Flowline  Flowline travel-  Branch travel-  Network travel-  Stream ');
+fprintf(1,'%s \n',' sequence      ID      flowline  sequence   ComID     time (15-min)    time (15-min)    time (15-min)   order ' );
+fprintf(1,'%s \n',repmat('-',1,ndash));
+for j = 1:nFlowlines
+    fprintf(1,'%6u   %12u %5u     %5u   %10u    %12.4f    %12.4f     %11.4f  %8u \n',...
+        branchID(j,1),LevelPathI(j),branchID(j,2),j,ComID(j),...
+        ttFlowline(j),ttBranch(j),ttNetwork(j),StreamOrde(j));
+end
+fprintf(1,'%s \n',repmat('-',1,ndash));
 
 
 
