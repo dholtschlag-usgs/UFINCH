@@ -729,9 +729,9 @@ LevelPathSet      = struct('ComID',{},'LengthKm',{},'AreaSqKm',{},'MaVelU',{},..
     'StreamLeve',{},'FromNode',{},'ToNode',{},'HydroSeq',{},...
     'LevelPathI',{},'StartFlag',{},'TT',{},'CumTT',{});
 %
-% Unique level paths in network
+% Unique level paths (branches) in network
 uLevelPath = unique(LevelPathI);
-% Number of unique level paths
+% Number of unique level paths (branches)
 nLevelPath = length(uLevelPath);
 % Count flowlines in each level path
 ndash = 70;
