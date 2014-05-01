@@ -73,7 +73,7 @@ nBranch = length(unique(LevelPathI));
 fprintf(1,'%s \n',['There are ',num2str(nBranch),' branches in the ',fname,' network.']);
 %
 % Allocate vector for branch and reach identifiers
-branchID      = nan(nBranch,3);
+branchID      = nan(nBranch,4);
 % Allocate vector for cum
 ttBranch      = zeros(nFlowlines,1);
 % Initialize branch as first LevelPathI
@@ -83,14 +83,15 @@ ttBranch(j)   =  ttFlowline(j);
 branchID(j,1) =  1;  % First Branch
 branchID(j,2) =  1;  % First Flowline of Branch
 branchID(j,3) =  1;  % First Flowline
+branchID(j,4) =  HydroSeq(j);
 % Print header for branch output
 ndash = 82;
 fprintf(1,'%s \n',repmat('-',1,ndash));
 fprintf(1,'%s \n','  Flowline   Branch   Branch  Sequence  Flowline  Flowline travel-  Branch travel- ');
 fprintf(1,'%s \n','  sequence  sequence    ID    in Branch   ComID     time (15-min)    time (15-min)  ');
 fprintf(1,'%s \n',repmat('-',1,ndash));
-fprintf(1,'%6u   %6u   %12u  %5u  %10u    %12.4f    %12.4f \n',j, branchID(j,1),...
-    LevelPathI(j),branchID(j,2),ComID(j),ttFlowline(j),ttBranch(j));
+fprintf(1,'%6u   %6u   %12u  %5u  %10u    %12.4f    %12.4f  %12u \n',j, branchID(j,1),...
+    LevelPathI(j),branchID(j,2),ComID(j),ttFlowline(j),ttBranch(j),HydroSeq(j));
 for j = 2:nFlowlines
     if (iBranch       == LevelPathI(j))
         ttBranch(j)   =  ttBranch(j-1) + ttFlowline(j);        
@@ -104,9 +105,9 @@ for j = 2:nFlowlines
         branchID(j,2) = 1; 
     end
     branchID(j,3) =  j;
-    fprintf(1,'%6u   %6u   %12u  %5u  %10u    %12.4f    %12.4f \n',j, branchID(j,1),...
-        LevelPathI(j),branchID(j,2),ComID(j),ttFlowline(j),ttBranch(j));
-
+    branchID(j,4) =  HydroSeq(j);
+    fprintf(1,'%6u   %6u   %12u  %5u  %10u    %12.4f    %12.4f  %12u \n',j, branchID(j,1),...
+        LevelPathI(j),branchID(j,2),ComID(j),ttFlowline(j),ttBranch(j),HydroSeq(j));
 end
 fprintf(1,'%s \n',repmat('-',1,ndash));
 %
@@ -145,20 +146,32 @@ fprintf(1,'%s \n',repmat('-',1,ndash));
 %% Update ttNetworks in downstream order
 % Just print some stuff out about the branches
 ndxBrBase = find(branchID(:,2) == 1);
-
-brOrder   = nan(nBranch,2); 
-for i = 1:nBranch,
-    brOrder(i,1) = StreamOrde(ndxBrBase(i));
-    brOrder(i,2) = branchID(ndxBrBase(i),3);
-    fprintf(1,'%5u %5u %5u %5u \n',ndxBrBase(i),branchID(ndxBrBase(i),1),...
-        brOrder(i,1),brOrder(i,2));
-end
-%
-[~,ndx] = sort(brOrder,'descend');
 % Initially set the travel times in the network to that of the branches
 ttNetwork = ttBranch; 
 %
+brOrder   = nan(nBranch,3); 
 for i = 1:nBranch,
+    brOrder(i,1) = branchID(ndxBrBase(i),1);
+    brOrder(i,2) = branchID(ndxBrBase(i),3);
+    brOrder(i,3) = HydroSeq(ndxBrBase(i));
+    fprintf(1,'%5u %5u %5u %5u %10u\n',i,ndxBrBase(i),...
+        brOrder(i,1),brOrder(i,2),brOrder(i,3));
+end
+%
+[srtBrOrder,ndx] = sortrows(brOrder,3);
+% Start index at 2 because the minimum hydroseq is the main stem
+for i = 2:nBranch
+    % Print: Branch being updated, Flowline index
+    fprintf(1,'%6u %6u %10u \n',srtBrOrder(i,1),srtBrOrder(i,2),...
+        ComID(srtBrOrder(i,2)));
+    % ndxFromNode is the index of the 
+    ndxFromNode = find(ToNode(srtBrOrder(i,2)) == FromNode);
+    if ~isempty(ndxFromNode)
+        ndxAdd            = find( srtBrOrder(i,1) == branchID(:,1));        
+        ttNetwork(ndxAdd) = ttNetwork(ndxFromNode) + ttBranch(ndxAdd);
+    end
+end
+
     fprintf(1,'%5u \s',i, ndx(i), ComID(
     ndxFromNode = find(ToNode(ndx(i)) == FromNode);
     if ~isempty(ndxFromNode)
@@ -181,5 +194,23 @@ for j = 1:nFlowlines
 end
 fprintf(1,'%s \n',repmat('-',1,ndash));
 
+%% Initially set the travel times in the network to that of the branches
+ttNetwork = ttBranch; 
+% Find the k = 2nd order streams in the network
+sBranchID = sortrows(branchID,4);
+% Find the indices of the branches most downstream flowline
+ndxBrStrt = find(sBranchID(:,2) == 1);
+% Update travel times in the ttNetwork
+for i = 1:nBranch
+    % Find the index of the flowline whose FromNode matches the most
+    % downstream flowline ToNode in the branch 
+    ndxFromNode = find(ToNode(ndxBrStrt(i)) == FromNode);
+    if ~isempty(ndxFromNode)
+        ndxAdd = find(sBranchID(:,1) == i);
+        ttNetwork(ndxAdd) = ttNetwork(ndxAdd) + ttBranch(ndxFromNode); 
+    end
+%     fprintf(1,'%5u %5u %12u %10.4f \n',ndxBrStrt(i), branchID(ndxBrStrt(i),1),...
+%         ToNode(ndxBrStrt(i)), ttBranch(ndxFromNode));
+end
 
-
+branchI
