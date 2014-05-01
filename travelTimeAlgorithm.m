@@ -111,38 +111,6 @@ for j = 2:nFlowlines
 end
 fprintf(1,'%s \n',repmat('-',1,ndash));
 %
-%% Compute travel times in the network by connecting branches
-% Initially set the travel times in the network to that of the branches
-ttNetwork = ttBranch; 
-% Find the k = 2nd order streams in the network
-% Find the indices of the branches most downstream flowline
-ndxBrStrt = find(branchID(:,2) == 1);
-% Update travel times in the ttNetwork
-for i = 1:nBranch
-    % Find the index of the flowline whose FromNode matches the most
-    % downstream flowline ToNode in the branch 
-    ndxFromNode = find(ToNode(ndxBrStrt(i)) == FromNode);
-    if ~isempty(ndxFromNode)
-        ndxAdd = find(branchID(:,1) == i);
-        ttNetwork(ndxAdd) = ttNetwork(ndxAdd) + ttBranch(ndxFromNode); 
-    end
-%     fprintf(1,'%5u %5u %12u %10.4f \n',ndxBrStrt(i), branchID(ndxBrStrt(i),1),...
-%         ToNode(ndxBrStrt(i)), ttBranch(ndxFromNode));
-end
-%
-%% Print out travel times in flowlines, branches, and the network
-ndash = 110;
-fprintf(1,'%s \n',repmat('-',1,ndash));
-fprintf(1,'%s \n','  Branch     Branch    Branch-   Flowline  Flowline  Flowline travel-  Branch travel-  Network travel-  Stream ');
-fprintf(1,'%s \n',' sequence      ID      flowline  sequence   ComID     time (15-min)    time (15-min)    time (15-min)   order ' );
-fprintf(1,'%s \n',repmat('-',1,ndash));
-for j = 1:nFlowlines
-    fprintf(1,'%6u   %12u %5u     %5u   %10u    %12.4f    %12.4f     %11.4f  %8u \n',...
-        branchID(j,1),LevelPathI(j),branchID(j,2),j,ComID(j),...
-        ttFlowline(j),ttBranch(j),ttNetwork(j),StreamOrde(j));
-end
-fprintf(1,'%s \n',repmat('-',1,ndash));
-%
 %% Update ttNetworks in downstream order
 % Just print some stuff out about the branches
 ndxBrBase = find(branchID(:,2) == 1);
@@ -171,16 +139,6 @@ for i = 2:nBranch
         ttNetwork(ndxAdd) = ttNetwork(ndxFromNode) + ttBranch(ndxAdd);
     end
 end
-
-    fprintf(1,'%5u \s',i, ndx(i), ComID(
-    ndxFromNode = find(ToNode(ndx(i)) == FromNode);
-    if ~isempty(ndxFromNode)
-        ndxAdd = find(branchID(:,1) == ndx(i));
-        ttNetwork(ndxAdd) = ttNetwork(ndxAdd) + ttBranch(ndxFromNode); 
-    end
-%     fprintf(1,'%5u %5u %5u\n',ndxBrBase(i),branchID(ndxBrBase(i),1),...
-%         brOrder(i));
-end
 %
 ndash = 110;
 fprintf(1,'%s \n',repmat('-',1,ndash));
@@ -194,23 +152,3 @@ for j = 1:nFlowlines
 end
 fprintf(1,'%s \n',repmat('-',1,ndash));
 
-%% Initially set the travel times in the network to that of the branches
-ttNetwork = ttBranch; 
-% Find the k = 2nd order streams in the network
-sBranchID = sortrows(branchID,4);
-% Find the indices of the branches most downstream flowline
-ndxBrStrt = find(sBranchID(:,2) == 1);
-% Update travel times in the ttNetwork
-for i = 1:nBranch
-    % Find the index of the flowline whose FromNode matches the most
-    % downstream flowline ToNode in the branch 
-    ndxFromNode = find(ToNode(ndxBrStrt(i)) == FromNode);
-    if ~isempty(ndxFromNode)
-        ndxAdd = find(sBranchID(:,1) == i);
-        ttNetwork(ndxAdd) = ttNetwork(ndxAdd) + ttBranch(ndxFromNode); 
-    end
-%     fprintf(1,'%5u %5u %12u %10.4f \n',ndxBrStrt(i), branchID(ndxBrStrt(i),1),...
-%         ToNode(ndxBrStrt(i)), ttBranch(ndxFromNode));
-end
-
-branchI
