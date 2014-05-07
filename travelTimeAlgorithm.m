@@ -151,13 +151,13 @@ end
 %
 ndash = 110;
 fprintf(1,'%s \n',repmat('-',1,ndash));
-fprintf(1,'%s \n','  Branch     Branch    Branch-   Flowline  Flowline  Flowline travel-  Branch travel-  Network travel-  Stream ');
-fprintf(1,'%s \n',' sequence      ID      flowline  sequence   ComID     time (15-min)    time (15-min)    time (15-min)   order ' );
+fprintf(1,'%s \n','  Branch               Branch-   Flowline  Flowline  Flowline travel-  Branch travel-  Network travel-   Hydro- ');
+fprintf(1,'%s \n',' sequence  LevelPathI  flowline  sequence   ComID     time (15-min)    time (15-min)    time (15-min)   sequence' );
 fprintf(1,'%s \n',repmat('-',1,ndash));
 for j = 1:nFlowlines
-    fprintf(1,'%6u   %12u %5u     %5u   %10u    %12.4f    %12.4f     %11.4f \n',...
+    fprintf(1,'%6u   %12u %5u     %5u   %10u    %12.4f    %12.4f     %11.4f  %12u \n',...
         branchID(j,1),LevelPathI(j),branchID(j,2),j,ComID(j),...
-        ttFlowline(j),ttBranch(j),ttNetwork(j));
+        ttFlowline(j),ttBranch(j),ttNetwork(j),HydroSeq(j));
 end
 fprintf(1,'%s \n',repmat('-',1,ndash));
 %
@@ -173,5 +173,17 @@ for i = 1:nFlowlines
 end
 %
 % 
-
+% Initiate branch computations
+for i = 1:nBranch,
+    ndx = find(branchID(:,1) == i);
+    % fprintf(1,'The %u branch has %u flowlines.\n',i,length(ndx));
+    branchComID = [];
+    for j = 1: length(ndx)
+        branchComID = [branchComID,' C',num2str(branchID(ndx(j),5))];
+    end
+    fprintf(1,'%u %s \n',i,branchComID);
+end
+%
+            
+        
 
