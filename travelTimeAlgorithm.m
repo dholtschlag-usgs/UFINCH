@@ -1,12 +1,13 @@
 % Develop and test new algorithm for computing travel times 
 % Prompt for 
-[fname, pname]  = uigetfile('..\HR02\GIS\nhdFlowline\*.nhd','Open Geometry for Streamgage');
+% [fname, pname]  = uigetfile('..\HR02\GIS\nhdFlowline\*.nhd','Open Geometry for Streamgage');
 % fid = fopen([pname fname],'rt');
 %% Read in network geometry
 % Use dialog box to get input NHDPlus geometry file containing fields
 %   "COMID","LENGTHKM","AREASQKM","MAVELU","STREAMLEVE","FROMNODE",
 %   "TONODE","HYDROSEQ","LEVELPATHI","STARTFLAG"
 % Read in the nhd geometry data
+clearvars -except fname pname
 headerlinesIn = 1; delimiterIn = ',';
 nhdMatrix = importdata([pname,fname],delimiterIn,headerlinesIn);
 % Identify column contents by header
@@ -149,6 +150,13 @@ for i = 2:nBranch
     end
 end
 %
+branchIDTable = table(branchID(:,1),branchID(:,2),branchID(:,3),...
+    branchID(:,4),branchID(:,5),FromNode,ToNode,LengthKm,AreaSqKm,...
+    MaVelU,LevelPathI,ttNetwork,'VariableNames',...
+    {'branch','branchElement','Flowline','HydroSeq','ComID',...
+    'FromNode','ToNode','LengthKm','AreaSqKm','MaVelU','LevelPathI',...
+    'ttNetwork'});
+%
 ndash = 110;
 fprintf(1,'%s \n',repmat('-',1,ndash));
 fprintf(1,'%s \n','  Branch               Branch-   Flowline  Flowline  Flowline travel-  Branch travel-  Network travel-   Hydro- ');
@@ -165,25 +173,46 @@ fprintf(1,'%s \n',repmat('-',1,ndash));
 sttNetwork = sort(ttNetwork);
 % Just account for travel time in the flowline
 % Inital set of equations
-for i = 1:nFlowlines
-    fprintf(1,'%s \n',['C',num2str(ComID(i),'%03u'),'(t - ',...
-        num2str(ttNetwork(i),'%03u'),') = Ylds(',...
-        num2str(ttNetwork(i),'%03u'),') * ',...
-        num2str(AreaSqKm(i),5),' ;']);
-end
-%
+% for i = 1:nFlowlines
+%     fprintf(1,'%s \n',['C',num2str(ComID(i),'%03u'),'(t - ',...
+%         num2str(ttNetwork(i),'%03u'),') = Ylds(',...
+%         num2str(ttNetwork(i),'%03u'),') * ',...
+%         num2str(AreaSqKm(i),5),' ;']);
+% end
+% %
 % 
 % Initiate branch computations
-for i = 1:nBranch,
-    ndx = find(branchID(:,1) == i);
-    % fprintf(1,'The %u branch has %u flowlines.\n',i,length(ndx));
-    branchComID = [];
-    for j = 1: length(ndx)
-        branchComID = [branchComID,' C',num2str(branchID(ndx(j),5))];
-    end
-    fprintf(1,'%u %s \n',i,branchComID);
-end
+% for i = 1:nBranch,
+%     ndx = find(branchID(:,1) == i);
+%     % fprintf(1,'The %u branch has %u flowlines.\n',i,length(ndx));
+%     branchComID = [];
+%     for j = 1: length(ndx)
+%         branchComID = [branchComID,' C',num2str(branchID(ndx(j),5))];
+%     end
+%     fprintf(1,'%u %s \n',i,branchComID);
+% end
 %
+nEqn = 32;
+sBranchIDTable = sortrows(branchIDTable,'HydroSeq','descend');
+for i = 1:nEqn,
+    ndx = find(sBranchIDTable.FromNode(i) == sBranchIDTable.ToNode);
+    usFlowlines = [];
+    if ~isempty(ndx)   
+        for j = 1:length(ndx)
+            usFlowlines = [usFlowlines,' + C',num2str(sBranchIDTable.ComID(ndx(j))),...
+                '(t - ',num2str(sBranchIDTable.ttNetwork(ndx(j)),'%04u'),')'];
+        end
+    end
+    fprintf(1,'%s \n',['C',num2str(sBranchIDTable.ComID(i)),...
+        '(t - ',num2str(sBranchIDTable.ttNetwork(i),'%04u'),') = Ylds',...
+        '(t - ',num2str(sBranchIDTable.ttNetwork(i),'%04u'),') * ',...
+        num2str(sBranchIDTable.AreaSqKm(i),'%9.4f'),...
+        usFlowlines,';']);
+end
+
             
         
+
+
+
 
