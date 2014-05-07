@@ -20,6 +20,6 @@ end
 %
 clearvars dir StrtCol
 %% Run the UFinch GUI
-UFinchGUIv1e;
-fprintf(1,'UFinch v1e\n');
+UFinchGUIv1c;
+fprintf(1,'UFinch v1c\n');
 

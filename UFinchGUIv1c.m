@@ -677,19 +677,19 @@ ndxAreaM = find(strncmpi(A.colheaders,'AreaSqKm',length('AreaSqKm')));
 ndxV001c = find(strncmpi(A.colheaders,'V0001c',length('V0001c')));
 ndxV001e = find(strncmpi(A.colheaders,'V0001e',length('V0001e')));
 % Replace data structure with data.
-A           = A.data;
+Amatrix    = A.data;
 % Sort rows of A by HydroSeq in decreasing (-) order.
 % A          = cell2mat(A);
-A          = sortrows(A,-ndxHSequ);
-ComID      = A(:, ndxComID);
-LengthKm   = A(:, ndxLenKm);
-AreaSqKm   = A(:, ndxAreaM);
+Amatrix    = sortrows(Amatrix,-ndxHSequ);
+ComID      = Amatrix(:, ndxComID);
+LengthKm   = Amatrix(:, ndxLenKm);
+AreaSqKm   = Amatrix(:, ndxAreaM);
 fprintf('%8.1f\n',min(AreaSqKm));
 fprintf('%8.1f\n',max(AreaSqKm));
 % V0001c     = A(:, ndxV001c);
 % V0001e     = A(:, ndxV001e);
 % MaVelU is the mean velocity metric selected 
-MaVelU      = A(:, ndxV001c);
+MaVelU      = Amatrix(:, ndxV001c);
 % Find flowlines with positive velocities
 % ndxPos     = find(MaVelU>0);
 % Compute average of positive velocities
@@ -699,11 +699,11 @@ MaVelU      = A(:, ndxV001c);
 % Replace flowline velocities coded -9999 (<0) with average values
 % MaVelU(ndxNeg) = velAve;
 %
-StreamLeve = A(:, ndxSlevl);
-FromNode   = A(:, ndxFNode);
-ToNode     = A(:, ndxTNode);
-HydroSeq   = A(:, ndxHSequ);
-LevelPathI = A(:, ndxLPath);
+StreamLeve = Amatrix(:, ndxSlevl);
+FromNode   = Amatrix(:, ndxFNode);
+ToNode     = Amatrix(:, ndxTNode);
+HydroSeq   = Amatrix(:, ndxHSequ);
+LevelPathI = Amatrix(:, ndxLPath);
 % startFlag  = A(:, ndxSFlag);
 %
 % store results in 
@@ -718,7 +718,7 @@ setappdata(hUFinchGUI,'FromNode',   FromNode);
 setappdata(hUFinchGUI,'ToNode',     ToNode);
 setappdata(hUFinchGUI,'HydroSeq',   HydroSeq);
 setappdata(hUFinchGUI,'LevelPathI', LevelPathI);
-setappdata(hUFinchGUI,'A',          A);
+setappdata(hUFinchGUI,'Amatrix',    Amatrix);
 %
 nLevels          = range(StreamLeve);
 minStreamLevel   = min(StreamLeve);
@@ -1346,7 +1346,7 @@ for h = StreamLevelMax-1:-1:StreamLevelMin,
             % Loop over all ToNodes contributing to the flowline
             % ADJUSTMENT FOR MID-ATLANTIC REGION 02
             % for m = 2:length(ToNodeNdx)
-            for m = 1:length(ToNodeNdx)
+            for m = 2:length(ToNodeNdx)
                 % Find the level path for the mth contributing flowline
                 LevelPathNdx = find(strcmp({LevelPathSet.LevelPathI},...
                     num2str(LevelPathI(ToNodeNdx(m)))));

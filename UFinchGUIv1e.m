@@ -1350,7 +1350,7 @@ for h = StreamLevelMax-1:-1:StreamLevelMin,
             % Loop over all ToNodes contributing to the flowline
             % ADJUSTMENT FOR MID-ATLANTIC REGION 02
             % for m = 2:length(ToNodeNdx)
-            for m = 1:length(ToNodeNdx)
+            for m = 2:length(ToNodeNdx)
                 % Find the level path for the mth contributing flowline
                 LevelPathNdx = find(strcmp({LevelPathSet.LevelPathI},...
                     num2str(LevelPathI(ToNodeNdx(m)))));
