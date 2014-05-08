@@ -1461,7 +1461,7 @@ setappdata(hUFinchGUI,'seqComID',seqComID);
 setappdata(hUFinchGUI,'Ylds',Ylds);
 % Store results for each flowline computation in the handle memory
 for i = 1:nEqn
-    eval(['setappdata(hUFinchGUI,','''C',num2str(ComID(i)),''',C',num2str(ComID(i))]);
+    eval(['setappdata(hUFinchGUI,','''C',num2str(ComID(i)),''',C',num2str(ComID(i)),');']);
 end
 
 % 
@@ -1483,7 +1483,7 @@ hold on
 endComIDndx = find(seqComID == ComID(end));
 %
 plot(timeVec(tbeg:tend-maxTTime),...
-      floOut(maxTTime-1:nSim-2,endComIDndx),'b:','MarkerSize',2);
+      C5909161(maxTTime-1:nSim-2),'b:','MarkerSize',2);
 xlabel('Date');
 ylabel('Flow, in cubic feet per second');
 legend('Measured','Simulated');
@@ -1646,6 +1646,13 @@ RndTT           = getappdata(hUFinchGUI,'RndTT');
 sYrMoDaHrMn     = getappdata(hUFinchGUI,'sYrMoDaHrMn');
 % Get end time
 eYrMoDaHrMn     = getappdata(hUFinchGUI,'eYrMoDaHrMn');
+%
+nEqn            = length(ComID);
+% Retrieve results for each flowline computation from handle memory
+for i = 1:nEqn
+    eval(['C',num2str(ComID(i)),' = getappdata(hUFinchGUI,','''C',num2str(ComID(i)),''');']);
+end
+%
 % filename of output file
 fName = strcat(gageNumber,...
                '_b',datestr(sYrMoDaHrMn,'yyyy_mm_dd_HH_MM'),...
