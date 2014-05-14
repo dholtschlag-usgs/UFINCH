@@ -1,7 +1,7 @@
 %% Check constant yields and compare with stream drainage area in sqkm
 % Select matlab ouput file of simulated UFINCH flows 
 [fname, pname]  = uigetfile({['..\..\..\Data\UFinch\HR02\FlowData\Model\','.mat']},...
-    'Open ASCII File of Unit Flows for Selected Streamgage');
+    'Open Matlab File of Unit Flows from UFINCH simulation');
 % Load the data file
 load([pname,fname]);
 % Select in GageNetworkInfo.txt
@@ -33,6 +33,13 @@ title({'Relation between NWIS Drainage Areas and Yield-Equavalent Drainage Areas
     'at Streamgages Upstream from 01636500 Shenandoah River at Millville, VA'});
 
 legend('Data pairs','Line of Agreement','Location','NorthWest');
+%
+figure(2); clf(2);
+ecdf(log10(GageNetworkInfo.DA_SQ_MILE))
+xlabel('log_{10} Drainage Area, in Square Miles');
+ylabel('Empirical Cumulative Probability');
+title({'Distribution Function of log_{10} Drainage Areas at Streamgages',...
+    'Upstream from 01636500 Shenandoah River at Millville, WV'});
 
 
 
