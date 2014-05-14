@@ -1,6 +1,6 @@
 % Develop and test new algorithm for computing travel times 
 % Prompt for 
-% [fname, pname]  = uigetfile('..\HR02\GIS\nhdFlowline\*.nhd','Open Geometry for Streamgage');
+[fname, pname]  = uigetfile('..\HR02\GIS\nhdFlowline\*.nhd','Open Geometry for Streamgage');
 % fid = fopen([pname fname],'rt');
 %% Read in network geometry
 % Use dialog box to get input NHDPlus geometry file containing fields

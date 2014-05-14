@@ -59,7 +59,8 @@ fprintf(1,'Index   LevelPathID    ComID    kilometers  ft/s     steps     \n');
 fprintf(1,[repmat('-',1,ndash),'\n']);
 for i = 1:nFlowlines,
     % The constant 2.18723 converts 1*km/(1*fps * 5/3) into 15-min units
-    ttFlowline(i) = round(LengthKm(i) / V0001C(i) * 2.18723);
+    % Experimentin with high (*2) velocity
+    ttFlowline(i) = max(1,floor(LengthKm(i) / (V0001C(i)*2) * 2.18723));
     fprintf(1,' %3u  %12u  %10u  %7.3f  %8.4f  %9.4f \n',...
         i,LevelPathI(i),ComID(i),LengthKm(i),V0001C(i),ttFlowline(i));
 end
@@ -77,7 +78,8 @@ ttBranch      = zeros(nFlowlines,1);
 % Initialize branch as first LevelPathI
 j             =  1;
 iBranch       =  LevelPathI(j);
-ttBranch(j)   =  max(1,round(ttFlowline(j)));
+% ttBranch(j)   =  max(1,round(ttFlowline(j)));
+ttBranch(j)   =  max(1,floor(ttFlowline(j)));
 branchID(j,1) =  1;  % First Branch
 branchID(j,2) =  1;  % First Flowline of Branch
 branchID(j,3) =  1;  % First Flowline
@@ -94,11 +96,12 @@ fprintf(1,'%6u   %6u   %12u  %5u  %10u    %12.4f    %12.4f  %12u \n',j, branchID
 for j = 2:nFlowlines
     if (iBranch       == LevelPathI(j))
         % max(1,ttFlowline(j)) is intended to take care of short reaches
-        if ttFlowline(j)<1
-            fprintf(1,'%u %8.4f \n',j,ttFlowline(j));
-        end
-        ttBranch(j)   =  max(round(ttBranch(j-1) + ttFlowline(j)),...
-                             round(ttBranch(j-1) + 1));        
+%         if ttFlowline(j)<1
+%             fprintf(1,'%u %8.4f \n',j,ttFlowline(j));
+%         end
+%         ttBranch(j)   =  max(floor(ttBranch(j-1) + ttFlowline(j)),...
+%                              floor(ttBranch(j-1) + 1));        
+        ttBranch(j)   =  ttBranch(j-1) + ttFlowline(j);
         branchID(j,1) =  branchID(j-1,1);
         branchID(j,2) =  branchID(j-1,2) + 1;
     else
@@ -142,7 +145,7 @@ for i = 2:nBranch
     ndxFromNode = find(ToNode(srtBrOrder(i,2)) == FromNode);
     if ~isempty(ndxFromNode)
         ndxAdd            = find( srtBrOrder(i,1) == branchID(:,1));        
-        ttNetwork(ndxAdd) = round(ttNetwork(ndxFromNode) + ttBranch(ndxAdd));
+        ttNetwork(ndxAdd) = floor(ttNetwork(ndxFromNode) + ttBranch(ndxAdd));
     end
 end
 %
