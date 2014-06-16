@@ -124,15 +124,6 @@ legend('UFINCH','Measured');
 text(datenum(2006,6,1),150,{'Computed Daily Mean Flows Plotted at Noon.',...
     'UFINCH Noon Flows Plotted from 15-min Values.'});
 %
-%% Plot quantiles
-% figure(2); hold on; 
-% qqplot(log10(tStreamgage.flow),log10(uQUfinch(1+travTime:end)));
-% % Get and Set properties of lines 
-% h = get(gca,'Children'); set(h(1),'MarkerSize',2); set(h(1),'MarkerEdgeColor','g')
-%                          set(h(3),'MarkerSize',2); set(h(3),'Color','g')
-% xlabel('Quantiles of log_{10}Computed Daily Mean Flows at Streamgage');
-% ylabel('Quantiles of log_{10}Simulated Unit Flows by UFINCH');
-% title(['Quantile-Quantile Plot of Measured Daily with UFINCH Unit Flows at',num2str(selGageNo),' ',selGageName]); 
 %% Plot relation between flows
 dQUfinch      = interp1(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),...
                   tStreamgage.Date+0.5,'pchip');
@@ -195,15 +186,6 @@ legend('UFINCH','Measured');
 text(datenum(2006,6,1),20,{'Computed Daily Mean Flows Plotted at Noon.',...
     'UFINCH Noon Flows Plotted from 15-min Values.'});
 %
-%% Plot quantiles
-% figure(2); hold on; 
-% qqplot(log10(tStreamgage.flow),log10(uQUfinch(1+travTime:end)));
-% % Get and Set properties of lines 
-% h = get(gca,'Children'); set(h(1),'MarkerSize',2); set(h(1),'MarkerEdgeColor','c')
-%                          set(h(3),'MarkerSize',2); set(h(3),'Color','c')
-% xlabel('Quantiles of log_{10}Computed Daily Mean Flows at Streamgage');
-% ylabel('Quantiles of log_{10}Simulated Unit Flows by UFINCH');
-% title(['Quantile-Quantile Plot of Measured Daily with UFINCH Unit Flows at',num2str(selGageNo),' ',selGageName]); 
 %% Plot Relation Between Flows
 dQUfinch      = interp1(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),...
                   tStreamgage.Date+0.5,'pchip');
@@ -219,7 +201,7 @@ h1 = legend('Location','NorthWest',{'Line of Agreement','01636500 (DArea 3041 mi
 pause()
 set(h1,'visible','off'); delete(h1);
 %
-%%
+%% 
 selGageNo   = 01622000;
 selGageName = 'NORTH RIVER NEAR BURKETOWN, VA';
 selComID    = 5908733;
@@ -265,16 +247,6 @@ xlabel('Water Year');
 legend('UFINCH','Measured');
 text(datenum(2006,6,1),20,{'Computed Daily Mean Flows Plotted at Noon.',...
     'UFINCH Noon Flows Plotted from 15-min Values.'});
-%
-%% Plot quantiles
-% figure(2); hold on; 
-% qqplot(log10(tStreamgage.flow),log10(uQUfinch(1+travTime:end)));
-% % Get and Set properties of lines 
-% h = get(gca,'Children'); set(h(1),'MarkerSize',2); set(h(1),'MarkerEdgeColor','m')
-%                          set(h(3),'MarkerSize',2); set(h(3),'Color','m')
-% xlabel('Quantiles of log_{10}Computed Daily Mean Flows at Streamgage');
-% ylabel('Quantiles of log_{10}Simulated Unit Flows by UFINCH');
-% title(['Quantile-Quantile Plot of Measured Daily with UFINCH Unit Flows at',num2str(selGageNo),' ',selGageName]); 
 %
 %% Plot relation between flows
 dQUfinch      = interp1(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),...
@@ -339,16 +311,15 @@ legend('UFINCH','Measured');
 text(datenum(2006,6,1),0.2,{'Computed Daily Mean Flows Plotted at Noon.',...
     'UFINCH Noon Flows Plotted from 15-min Values.'});
 %
-%% Plot quantiles
-% figure(2); hold on; 
-% qqplot(log10(tStreamgage.flow),log10(uQUfinch(1+travTime:end)));
-% % Get and Set properties of lines 
-% h = get(gca,'Children'); set(h(1),'MarkerSize',2); set(h(1),'MarkerEdgeColor','k')
-%                          set(h(3),'MarkerSize',2); set(h(3),'Color','k')
-% xlabel('Quantiles of log_{10}Computed Daily Mean Flows at Streamgage');
-% ylabel('Quantiles of log_{10}Simulated Unit Flows by UFINCH');
-% title(['Quantile-Quantile Plot of Measured Daily with UFINCH Unit Flows at',num2str(selGageNo),' ',selGageName]); 
-%
+%% QQ plot 
+figure(10); clf(10);
+qqplot(log10(tStreamgage.flow),log10(uQUfinch));
+hold on
+plot([-0.5 3.9],[-0.5, 3.9],'k-');
+legend('Line Extrapolating Line Through the Upper and Lower Quantiles',...
+    'Line Connecting the Upper and Lower Quantiles','Quantile Pairs',...
+    'Line of Agreement','Location','NorthWest');
+
 %% Plot Relation between Flow Series
 dQUfinch      = interp1(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),...
                   tStreamgage.Date+0.5,'pchip');
@@ -441,4 +412,519 @@ h1 = legend('Location','NorthWest',{'Line of Agreement','01632000 (DArea 210 mi^
     'Bias Adjusted 01632000'});
 % pause()
 % set(h1,'visible','off'); delete(h1);
+
+%% 01625000 Middle River nr Grottoes, VA 
+selGageNo   = 01625000;
+selGageName = 'Middle River nr Grottoes, VA';
+selComID    = 5908355;
+%
+% Get daily flows from NWIS retrieval 
+[fname1, pname1]  = uigetfile({['..\HR02\FlowData\',['dQ',num2str(selGageNo,'%08u'),'.txt']]},...
+    'Open ASCII File of Daily Flows for Selected Streamgage');
+% Store daily flows in table
+tStreamgage      = readtable([pname1,fname1],'Delimiter','\t');
+% Standardize names
+tStreamgage.Properties.VariableNames = {'Agency','site_no','datetimeStr',...
+    'flow','flow_qualifier'};
+% Summarize table of data
+summary(tStreamgage);
+% Convert string to datetime
+tStreamgage.Date = datenum(tStreamgage.datetimeStr,'yyyy-mm-dd');
+%
+%% Plot the UFINCH flow at a selected ComID
+% Find travel time associated with ComID 5907079
+% Streamgage 01631000 is on ComID 5907079.  target ComID is targComID
+uQUfinch    = eval(['C',num2str(selComID)]);
+ndxComID    = find(ComID == selComID); 
+%
+% ttNetwork is a vector of network travel times computed in UFINCH
+%   travTime15 is the number of 15-minute travel time intervals from the base
+travTime15   = ttNetwork(ndxComID);
+fprintf(1,'For %u %s at ComID %u, the travel time is %u 15-min intervals.\n',...
+    selGageNo, selGageName, selComID, travTime15); 
+% Form timedate vector for UFINCH flows
+vYrMoDaHrMn  = sYrMoDaHrMn:1/96:eYrMoDaHrMn;
+%% Plot times series
+figure(5); clf(5); 
+travTime15 = 110;                    % ADJUST travTime15 TO MATCH 
+travTime = round(11/3*travTime15); 
+semilogy(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),'r-');
+datetick('x');
+hold on
+title(['Flows at ',num2str(selGageNo),' ',selGageName]); 
+% Add 0.5 to tStreamgage.Date to put average at noon
+semilogy(tStreamgage.Date+0.5,tStreamgage.flow,'b-');
+ylabel('Streamflow, in cubic feet per second');
+xlabel('Water Year');
+legend('UFINCH','Measured');
+text(datenum(2006,6,1),20,{'Computed Daily Mean Flows Plotted at Noon.',...
+    'UFINCH Noon Flows Plotted from 15-min Values.'});
+%
+%% Plot relation between flows
+dQUfinch      = interp1(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),...
+                  tStreamgage.Date+0.5,'pchip');
+ndx           = find(dQUfinch <= 0);
+dQUfinch(ndx) = nan();
+%
+figure(6); clf(6);
+plot([1.1 3.9],[1.1,3.9],'k-');
+hold on;
+plot(log10(tStreamgage.flow),log10(dQUfinch),'g+','MarkerSize',1.5);
+xlabel('Computed Daily Mean Streamflow, in log_{10} cubic feet per second');
+ylabel('UFINCH Noon Streamflow, in log_{10} cubic feet per second');
+h1 = legend('Location','NorthWest',{'Line of Agreement','01625000 (DArea 373 mi^2)'});
+pause()
+set(h1,'visible','off'); delete(h1);
+%
+%% 01627500 South River at Harriston, VA 
+selGageNo   = 01627500;
+selGageName = 'South River at Harriston, VA';
+selComID    = 5908375;
+%
+% Get daily flows from NWIS retrieval 
+[fname1, pname1]  = uigetfile({['..\HR02\FlowData\',['dQ',num2str(selGageNo,'%08u'),'.txt']]},...
+    'Open ASCII File of Daily Flows for Selected Streamgage');
+% Store daily flows in table
+tStreamgage      = readtable([pname1,fname1],'Delimiter','\t');
+% Standardize names
+tStreamgage.Properties.VariableNames = {'Agency','site_no','datetimeStr',...
+    'flow','flow_qualifier'};
+% Summarize table of data
+summary(tStreamgage);
+% Convert string to datetime
+tStreamgage.Date = datenum(tStreamgage.datetimeStr,'yyyy-mm-dd');
+%
+%% Plot the UFINCH flow at a selected ComID
+% Find travel time associated with ComID 5907079
+% Streamgage 01631000 is on ComID 5907079.  target ComID is targComID
+uQUfinch    = eval(['C',num2str(selComID)]);
+ndxComID    = find(ComID == selComID); 
+%
+% ttNetwork is a vector of network travel times computed in UFINCH
+%   travTime15 is the number of 15-minute travel time intervals from the base
+travTime15   = ttNetwork(ndxComID);
+fprintf(1,'For %u %s at ComID %u, the travel time is %u 15-min intervals.\n',...
+    selGageNo, selGageName, selComID, travTime15); 
+% Form timedate vector for UFINCH flows
+vYrMoDaHrMn  = sYrMoDaHrMn:1/96:eYrMoDaHrMn;
+%% Plot times series
+figure(5); clf(5); 
+travTime15 = 110;                    % ADJUST travTime15 TO MATCH 
+travTime = round(11/3*travTime15); 
+semilogy(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),'r-');
+datetick('x');
+hold on
+title(['Flows at ',num2str(selGageNo),' ',selGageName]); 
+% Add 0.5 to tStreamgage.Date to put average at noon
+semilogy(tStreamgage.Date+0.5,tStreamgage.flow,'b-');
+ylabel('Streamflow, in cubic feet per second');
+xlabel('Water Year');
+legend('UFINCH','Measured');
+text(datenum(2006,6,1),20,{'Computed Daily Mean Flows Plotted at Noon.',...
+    'UFINCH Noon Flows Plotted from 15-min Values.'});
+%
+%% Plot relation between flows
+dQUfinch      = interp1(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),...
+                  tStreamgage.Date+0.5,'pchip');
+ndx           = find(dQUfinch <= 0);
+dQUfinch(ndx) = nan();
+%
+figure(6); clf(6);
+plot([1.1 3.9],[1.1,3.9],'k-');
+hold on;
+plot(log10(tStreamgage.flow),log10(dQUfinch),'g+','MarkerSize',1.5);
+xlabel('Computed Daily Mean Streamflow, in log_{10} cubic feet per second');
+ylabel('UFINCH Noon Streamflow, in log_{10} cubic feet per second');
+h1 = legend('Location','NorthWest',{'Line of Agreement','01627500 (DArea 212 mi^2)'});
+pause()
+set(h1,'visible','off'); delete(h1);
+%
+%% 01635090 Cedar Creek above HWY 11 nr Middletown, VA 
+selGageNo   = 01635090;
+selGageName = 'Cedar Creek above HWY 11 nr Middletown, VA (Drainage Area 154 mi^2)';
+selComID    = 8440399;
+%
+% Get daily flows from NWIS retrieval 
+[fname1, pname1]  = uigetfile({['..\HR02\FlowData\',['dQ',num2str(selGageNo,'%08u'),'.txt']]},...
+    'Open ASCII File of Daily Flows for Selected Streamgage');
+% Store daily flows in table
+tStreamgage      = readtable([pname1,fname1],'Delimiter','\t');
+% Standardize names
+tStreamgage.Properties.VariableNames = {'Agency','site_no','datetimeStr',...
+    'flow','flow_qualifier'};
+% Summarize table of data
+summary(tStreamgage);
+% Convert string to datetime
+tStreamgage.Date = datenum(tStreamgage.datetimeStr,'yyyy-mm-dd');
+%
+%% Plot the UFINCH flow at a selected ComID
+% Find travel time associated with ComID 5907079
+% Streamgage 01631000 is on ComID 5907079.  target ComID is targComID
+uQUfinch    = eval(['C',num2str(selComID)]);
+ndxComID    = find(ComID == selComID); 
+%
+% ttNetwork is a vector of network travel times computed in UFINCH
+%   travTime15 is the number of 15-minute travel time intervals from the base
+travTime15   = ttNetwork(ndxComID);
+fprintf(1,'For %u %s at ComID %u, the travel time is %u 15-min intervals.\n',...
+    selGageNo, selGageName, selComID, travTime15); 
+% Form timedate vector for UFINCH flows
+vYrMoDaHrMn  = sYrMoDaHrMn:1/96:eYrMoDaHrMn;
+%% Plot times series
+figure(5); clf(5); 
+travTime15 = 110;                    % ADJUST travTime15 TO MATCH 
+travTime = round(11/3*travTime15); 
+semilogy(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),'r-');
+datetick('x');
+hold on
+title(['Flows at ',num2str(selGageNo),' ',selGageName]); 
+% Add 0.5 to tStreamgage.Date to put average at noon
+semilogy(tStreamgage.Date+0.5,tStreamgage.flow,'b-');
+ylabel('Streamflow, in cubic feet per second');
+xlabel('Water Year');
+legend('UFINCH','Measured');
+text(datenum(2007,1,1),10,{'Computed Daily Mean Flows Plotted at Noon.',...
+    'UFINCH Noon Flows Plotted from 15-min Values.'});
+%
+%% Plot relation between flows
+dQUfinch      = interp1(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),...
+                  tStreamgage.Date+0.5,'pchip');
+ndx           = find(dQUfinch <= 0);
+dQUfinch(ndx) = nan();
+%
+figure(6); clf(6);
+plot([1.1 3.9],[1.1,3.9],'k-');
+hold on;
+plot(log10(tStreamgage.flow),log10(dQUfinch),'g+','MarkerSize',1.5);
+xlabel('Computed Daily Mean Streamflow, in log_{10} cubic feet per second');
+ylabel('UFINCH Noon Streamflow, in log_{10} cubic feet per second');
+h1 = legend('Location','NorthWest',{'Line of Agreement','01635090 (DArea 154 mi^2)'});
+title(['Relation Between Measured and UFINCH Flows at ',num2str(selGageNo),' ',selGageName]); 
+%% Fit residuals to a function
+% Compute residuals
+residQUfinch = log10(dQUfinch) - log10(tStreamgage.flow);
+% plot relation
+figure(7); clf(7);
+plot(log10(tStreamgage.flow),residQUfinch,'b+','MarkerSize',1.5);
+xlabel('Computed Daily Mean Streamflow, in log_{10} cubic feet per second');
+ylabel('UFINCH Streamflow Bias, in log_{10} cubic feet per second');%
+hold on;
+% Specify equation form
+% g = inline('b(1) .* exp(-(b(2) .* x)) + b(3) .* x .* exp(-(b(4) .* x))','b','x');
+g = inline('b(1) .* exp(-(b(2) .* x)) + b(3) .* x ','b','x');
+x = log10(tStreamgage.flow);
+% Specify initial parameter estimate vector
+beta = [2 .5 0.2];
+beta = nlinfit(x,residQUfinch,g,beta);
+[beta,R,J,CovB,MSE,ErrorModelInfo] = nlinfit(x,residQUfinch,g,beta);
+% Parameter confidence interval computed first way
+ci1 = nlparci(beta,R,'covar',CovB);
+disp(ci1);
+% Parameter confidence interval computed second way
+ci2 = nlparci(beta,R,'jacobian',J);
+disp(ci2);
+%
+% Estimate linear equation instead
+mdl = fitlm(x,residQUfinch);
+
+hold on
+% y    = g(beta,sort(x));
+y      = mdl.Fitted;
+plot(x, y,'r-','LineWidth',2);
+legend('Bias Data Pairs','Estimated Relation','Location','NorthEast');
+text(-0.85,-0.32,'g(b,x) = b_1 .* exp(-(b_2 * x)) + b_3 * x ',...
+    'FontName','FixedWidth');
+text(-0.75,-0.45,['bhat  = ',num2str(beta)],'FontName','FixedWidth');
+text(-0.75,-0.58,[' 2.5% = ',num2str(ci1(:,1)')],'FontName','FixedWidth');
+text(-0.75,-0.71,['97.5% = ',num2str(ci1(:,2)')],'FontName','FixedWidth');
+title('Bias in UFINCH Flow Estimate at 01632000 NF Shenandoah River at Cootes Store, VA');
+%% Bias Adjusted UFINCH flows
+figure(8); clf(8); 
+travTime15 = 110;                    % ADJUST travTime15 TO MATCH 
+travTime = round(11/3*travTime15); 
+
+% yhat     = g(beta,log10(tStreamgage.flow));
+yhat     = mdl.Fitted;
+semilogy(tStreamgage.Date,...
+    10.^(log10(dQUfinch)-yhat),'r-');
+datetick('x');
+hold on
+title(['Flows at ',num2str(selGageNo),' ',selGageName]); 
+% Add 0.5 to tStreamgage.Date to put average at noon
+semilogy(tStreamgage.Date+0.5,tStreamgage.flow,'b-');
+ylabel('Streamflow, in cubic feet per second');
+xlabel('Water Year');
+legend('UFINCH','Measured');
+text(datenum(2005,6,1),2,{'Computed Daily Mean Flows Plotted at Noon.',...
+    'Bias Adjusted UFINCH Noon Flows from 15-min Values.'});
+%
+%% 01629500 SF Shenandoah River near Luray, VA 
+selGageNo   = 01629500;
+selGageName = 'SF Shenandoah River near Luray, VA (Drainage Area 1372 mi^2)';
+selComID    = 5907167;
+%
+% Get daily flows from NWIS retrieval 
+[fname1, pname1]  = uigetfile({['..\HR02\FlowData\',['dQ',num2str(selGageNo,'%08u'),'.txt']]},...
+    'Open ASCII File of Daily Flows for Selected Streamgage');
+% Store daily flows in table
+tStreamgage      = readtable([pname1,fname1],'Delimiter','\t');
+% Standardize names
+tStreamgage.Properties.VariableNames = {'Agency','site_no','datetimeStr',...
+    'flow','flow_qualifier'};
+% Summarize table of data
+summary(tStreamgage);
+% Convert string to datetime
+tStreamgage.Date = datenum(tStreamgage.datetimeStr,'yyyy-mm-dd');
+%
+%% Plot the UFINCH flow at a selected ComID
+% Find travel time associated with ComID 5907079
+% Streamgage 01631000 is on ComID 5907079.  target ComID is targComID
+uQUfinch    = eval(['C',num2str(selComID)]);
+ndxComID    = find(ComID == selComID); 
+%
+% ttNetwork is a vector of network travel times computed in UFINCH
+%   travTime15 is the number of 15-minute travel time intervals from the base
+travTime15   = ttNetwork(ndxComID);
+fprintf(1,'For %u %s at ComID %u, the travel time is %u 15-min intervals.\n',...
+    selGageNo, selGageName, selComID, travTime15); 
+% Form timedate vector for UFINCH flows
+vYrMoDaHrMn  = sYrMoDaHrMn:1/96:eYrMoDaHrMn;
+%% Plot times series
+figure(5); clf(5); 
+travTime15 = 110;                    % ADJUST travTime15 TO MATCH 
+travTime = round(11/3*travTime15); 
+semilogy(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),'r-');
+datetick('x');
+hold on
+title(['Flows at ',num2str(selGageNo),' ',selGageName]); 
+% Add 0.5 to tStreamgage.Date to put average at noon
+semilogy(tStreamgage.Date+0.5,tStreamgage.flow,'b-');
+ylabel('Streamflow, in cubic feet per second');
+xlabel('Water Year');
+legend('UFINCH','Measured');
+text(datenum(2007,1,1),10,{'Computed Daily Mean Flows Plotted at Noon.',...
+    'UFINCH Noon Flows Plotted from 15-min Values.'});
+%
+%% Plot relation between flows
+dQUfinch      = interp1(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),...
+                  tStreamgage.Date+0.5,'pchip');
+ndx           = find(dQUfinch <= 0);
+dQUfinch(ndx) = nan();
+%
+figure(6); clf(6);
+plot([1.1 3.9],[1.1,3.9],'k-');
+hold on;
+plot(log10(tStreamgage.flow),log10(dQUfinch),'g+','MarkerSize',1.5);
+xlabel('Computed Daily Mean Streamflow, in log_{10} cubic feet per second');
+ylabel('UFINCH Noon Streamflow, in log_{10} cubic feet per second');
+h1 = legend('Location','NorthWest',{'Line of Agreement','01635090 (DArea 154 mi^2)'});
+title(['Relation Between Measured and UFINCH Flows at ',num2str(selGageNo),' ',selGageName]); 
+%% Fit residuals to a function
+% Compute residuals
+residQUfinch = log10(dQUfinch) - log10(tStreamgage.flow);
+% plot relation
+figure(7); clf(7);
+plot(log10(tStreamgage.flow),residQUfinch,'b+','MarkerSize',1.5);
+xlabel('Computed Daily Mean Streamflow, in log_{10} cubic feet per second');
+ylabel('UFINCH Streamflow Bias, in log_{10} cubic feet per second');%
+hold on;
+% Specify equation form
+% g = inline('b(1) .* exp(-(b(2) .* x)) + b(3) .* x .* exp(-(b(4) .* x))','b','x');
+% g = inline('b(1) .* exp(-(b(2) .* x)) + b(3) .* x ','b','x');
+x = log10(tStreamgage.flow);
+% % Specify initial parameter estimate vector
+% beta = [2 .5 0.2];
+% beta = nlinfit(x,residQUfinch,g,beta);
+% [beta,R,J,CovB,MSE,ErrorModelInfo] = nlinfit(x,residQUfinch,g,beta);
+% % Parameter confidence interval computed first way
+% ci1 = nlparci(beta,R,'covar',CovB);
+% disp(ci1);
+% % Parameter confidence interval computed second way
+% ci2 = nlparci(beta,R,'jacobian',J);
+% disp(ci2);
+%
+% Estimate linear equation instead
+mdlR = fitlm(x,residQUfinch,'residQUfinch ~ x + x^2','ResponseVar',...
+    'residQUfinch','PredictorVars','x','RobustOpts','on');
+
+hold on
+% y    = g(beta,sort(x));
+yR      = mdlR.Fitted;
+[x_sort,ndx] = sort(x); 
+plot(x_sort, yR(ndx),'k-','LineWidth',2);
+legend('Bias Data Pairs','OLS Relation','Robust Relation',...
+    'Location','NorthEast');
+text(-0.85,-0.32,'g(b,x) = b_1 .* exp(-(b_2 * x)) + b_3 * x ',...
+    'FontName','FixedWidth');
+text(-0.75,-0.45,['bhat  = ',num2str(beta)],'FontName','FixedWidth');
+text(-0.75,-0.58,[' 2.5% = ',num2str(ci1(:,1)')],'FontName','FixedWidth');
+text(-0.75,-0.71,['97.5% = ',num2str(ci1(:,2)')],'FontName','FixedWidth');
+title(['Bias in UFINCH Flow Estimate at ',num2str(selGageNo),' ',selGageName]);
+%% Bias Adjusted UFINCH flows
+figure(8); clf(8); 
+travTime15 = 110;                    % ADJUST travTime15 TO MATCH 
+travTime = round(11/3*travTime15); 
+
+% yhat     = g(beta,log10(tStreamgage.flow));
+yhat     = mdlR.Fitted;
+semilogy(tStreamgage.Date,...
+    10.^(log10(dQUfinch)-yhat),'r-');
+datetick('x');
+hold on
+title(['Flows at ',num2str(selGageNo),' ',selGageName]); 
+% Add 0.5 to tStreamgage.Date to put average at noon
+semilogy(tStreamgage.Date+0.5,tStreamgage.flow,'b-');
+ylabel('Streamflow, in cubic feet per second');
+xlabel('Water Year');
+legend('UFINCH','Measured');
+text(datenum(2005,6,1),2,{'Computed Daily Mean Flows Plotted at Noon.',...
+    'Bias Adjusted UFINCH Noon Flows from 15-min Values.'});
+%% 01628500 SF Shenandoah River at Lynwood, VA 
+selGageNo   = 01628500;
+selGageName = 'SF Shenandoah River at Lynwood, VA (Drainage Area 1079 mi^2)';
+selComID    = 5908723;
+%
+% Get daily flows from NWIS retrieval 
+[fname1, pname1]  = uigetfile({['..\HR02\FlowData\',['dQ',num2str(selGageNo,'%08u'),'.txt']]},...
+    'Open ASCII File of Daily Flows for Selected Streamgage');
+% Store daily flows in table
+tStreamgage      = readtable([pname1,fname1],'Delimiter','\t');
+% Standardize names
+tStreamgage.Properties.VariableNames = {'Agency','site_no','datetimeStr',...
+    'flow','flow_qualifier'};
+% Summarize table of data
+summary(tStreamgage);
+% Convert string to datetime
+tStreamgage.Date = datenum(tStreamgage.datetimeStr,'yyyy-mm-dd');
+%
+%% Plot the UFINCH flow at a selected ComID
+% Find travel time associated with ComID 5907079
+% Streamgage 01631000 is on ComID 5907079.  target ComID is targComID
+uQUfinch    = eval(['C',num2str(selComID)]);
+ndxComID    = find(ComID == selComID); 
+%
+% ttNetwork is a vector of network travel times computed in UFINCH
+%   travTime15 is the number of 15-minute travel time intervals from the base
+travTime15   = ttNetwork(ndxComID);
+fprintf(1,'For %u %s at ComID %u, the travel time is %u 15-min intervals.\n',...
+    selGageNo, selGageName, selComID, travTime15); 
+% Form timedate vector for UFINCH flows
+vYrMoDaHrMn  = sYrMoDaHrMn:1/96:eYrMoDaHrMn;
+%% Plot times series
+figure(5); clf(5); 
+travTime15 = 110;                    % ADJUST travTime15 TO MATCH 
+travTime = round(11/3*travTime15); 
+semilogy(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),'r-');
+datetick('x');
+hold on
+title(['Flows at ',num2str(selGageNo),' ',selGageName]); 
+% Add 0.5 to tStreamgage.Date to put average at noon
+semilogy(tStreamgage.Date+0.5,tStreamgage.flow,'b-');
+ylabel('Streamflow, in cubic feet per second');
+xlabel('Water Year');
+legend('UFINCH','Measured');
+text(datenum(2007,1,1),30,{'Computed Daily Mean Flows Plotted at Noon.',...
+    'UFINCH Noon Flows Plotted from 15-min Values.'});
+%
+%% Plot relation between flows
+dQUfinch      = interp1(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),...
+                  tStreamgage.Date+0.5,'pchip');
+ndx           = find(dQUfinch <= 0);
+dQUfinch(ndx) = nan();
+%
+figure(6); clf(6);
+plot([1.8 4.6],[1.8,4.6],'k-');
+hold on;
+plot(log10(tStreamgage.flow),log10(dQUfinch),'g+','MarkerSize',1.5);
+xlabel('Computed Daily Mean Streamflow, in log_{10} cubic feet per second');
+ylabel('UFINCH Noon Streamflow, in log_{10} cubic feet per second');
+h1 = legend('Location','NorthWest',{'Line of Agreement',[num2str(selGageNo),' Drainage Area 1079']});
+title(['Relation Between Measured and UFINCH Flows at ',num2str(selGageNo),' ',selGageName]); 
+%% Fit residuals to a function
+% Compute residuals
+residQUfinch = log10(dQUfinch) - log10(tStreamgage.flow);
+ldQUfinch    = log10(dQUfinch);
+ldQMeasure   = log10(tStreamgage.flow);
+% plot relation
+figure(7); clf(7);
+plot(log10(tStreamgage.flow),residQUfinch,'b+','MarkerSize',1.5);
+xlabel('Computed Daily Mean Streamflow, in log_{10} cubic feet per second');
+ylabel('UFINCH Streamflow Bias, in log_{10} cubic feet per second');%
+hold on;
+% Specify equation form
+% g = inline('b(1) .* exp(-(b(2) .* x)) + b(3) .* x .* exp(-(b(4) .* x))','b','x');
+% g = inline('b(1) .* exp(-(b(2) .* x)) + b(3) .* x ','b','x');
+x = log10(tStreamgage.flow);
+% % Specify initial parameter estimate vector
+% beta = [2 .5 0.2];
+% beta = nlinfit(x,residQUfinch,g,beta);
+% [beta,R,J,CovB,MSE,ErrorModelInfo] = nlinfit(x,residQUfinch,g,beta);
+% % Parameter confidence interval computed first way
+% ci1 = nlparci(beta,R,'covar',CovB);
+% disp(ci1);
+% % Parameter confidence interval computed second way
+% ci2 = nlparci(beta,R,'jacobian',J);
+% disp(ci2);
+%
+% Estimate linear equation instead
+mdlR = fitlm(x,residQUfinch,'residQUfinch ~ x + x^2','ResponseVar',...
+    'residQUfinch','PredictorVars','x','RobustOpts','on');
+
+hold on
+% y    = g(beta,sort(x));
+yR      = mdlR.Fitted;
+[x_sort,ndx] = sort(x); 
+plot(x_sort, yR(ndx),'k-','LineWidth',2);
+legend('Bias Data Pairs','OLS Relation','Robust Relation',...
+    'Location','NorthEast');
+text(-0.85,-0.32,'g(b,x) = b_1 .* exp(-(b_2 * x)) + b_3 * x ',...
+    'FontName','FixedWidth');
+text(-0.75,-0.45,['bhat  = ',num2str(beta)],'FontName','FixedWidth');
+text(-0.75,-0.58,[' 2.5% = ',num2str(ci1(:,1)')],'FontName','FixedWidth');
+text(-0.75,-0.71,['97.5% = ',num2str(ci1(:,2)')],'FontName','FixedWidth');
+title(['Bias in UFINCH Flow Estimate at ',num2str(selGageNo),' ',selGageName]);
+%% Bias Adjusted UFINCH flows
+figure(8); clf(8); 
+travTime15 = 110;                    % ADJUST travTime15 TO MATCH 
+travTime = round(11/3*travTime15); 
+
+% yhat     = g(beta,log10(tStreamgage.flow));
+yhat     = mdlR.Fitted;
+semilogy(tStreamgage.Date,...
+    10.^(log10(dQUfinch)-yhat),'r-');
+datetick('x');
+hold on
+title(['Flows at ',num2str(selGageNo),' ',selGageName]); 
+% Add 0.5 to tStreamgage.Date to put average at noon
+semilogy(tStreamgage.Date+0.5,tStreamgage.flow,'b-');
+ylabel('Streamflow, in cubic feet per second');
+xlabel('Water Year');
+legend('UFINCH','Measured');
+text(datenum(2005,6,1),2,{'Computed Daily Mean Flows Plotted at Noon.',...
+    'Bias Adjusted UFINCH Noon Flows from 15-min Values.'});
+
+%
+predlogY  = sim(arx440,ldQUfinch);
+figure(11); clf(11);
+plot(predlogY,'b-');
+hold on 
+plot(log10(tStreamgage.flow),'r-');
+plot(log10(dQUfinch),'g-');
+
+figure(11); clf(11);
+h1 = ecdf(log10(tStreamgage.flow));
+hold on
+ecdf(log10(dQUfinch));
+
+qqplot(log10(tStreamgage.flow),log10(dQUfinch))
+xlabel('Quantiles of Measured Daily Log_{10} Streamflow');
+ylabel('Quantiles of UFINCH Estimated Log_{10} Streamflow');
+
+slogMeasured = sort(log10(tStreamgage.flow));
+slogUFinch   = sort(log10(dQUfinch));
+
+figure(12); clf(12);
+plot(slogMeasured,slogUFinch,'r+');
+hold on
+plot([1.8, 4.8],[1.8, 4.8],'k-');
 

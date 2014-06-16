@@ -151,7 +151,7 @@ for t = 1+maxTTime:nSim,
         eval(celFloEqn{srtEqn(i),1});
     end
 end
-% Use equantion directly
+% Use equation directly
 for t = 1+maxTTime:nSim,
     for i = 1:nEqn,       
         C5909173(t-107) = Ylds(t-107) * 59.469;
@@ -163,9 +163,7 @@ for t = 1+maxTTime:nSim,
         C5909169(t-022) = Ylds(t-022) * 27.018;
         C5909171(t-021) = Ylds(t-021) * 33.247;
         C5909019(t-003) = Ylds(t-003) * 2.884 + C5909171(t-021) + C5909169(t-022);
-        C5909017(t-049) = Ylds(t-049) * 9.076 + C5909021(t-058) + C5909019(t-003);
-        
-        
+        C5909017(t-049) = Ylds(t-049) * 9.076 + C5909021(t-058) + C5909019(t-003);        
         C5909023(t-049) = Ylds(t-049) * 27.522;
         C5909007(t-040) = Ylds(t-040) * 5.215 + C5909017(t-049) + C5909009(t-003);
         C5909159(t-039) = Ylds(t-039) * 36.782;
