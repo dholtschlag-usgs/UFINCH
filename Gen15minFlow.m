@@ -4,10 +4,10 @@
 % XLdatetimeUnit  and flowUnit
 % XLdateDaily     and flowDaily
 %
-gageNum  = '04112500';
-gageName = 'Red Cedar River at East Lansing, MI';
+gageNum  = '01632900';
+gageName = 'SMITH CREEK NEAR NEW MARKET, VA';
 %% Plot unit and daily flow data from 04118000
-datetimeUnit = XLdatetimeUnit + datenum('Dec-30-1899');
+% datetimeUnit = XLdatetimeUnit + datenum('Dec-30-1899');
 dateDaily    = XLdateDaily    + datenum('Dec-30-1899');
 %
 figure(1); clf(1);
@@ -24,7 +24,7 @@ flow15min    = interp1(dateDaily+.5,flowDaily,time15min,'pchip');
 % Plot interpolated 15-min values
 semilogy(time15min,flow15min,'k-');
 % Plot unit (30-min) values
-semilogy(datetimeUnit,flowUnit,'r-');
+% semilogy(datetimeUnit,flowUnit,'r-');
 hold off
 xlabel('Date'); ylabel('Streamflow, in cubic feet per second');
 title([gageNum,' ',gageName]);

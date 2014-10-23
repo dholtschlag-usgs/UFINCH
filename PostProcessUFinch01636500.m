@@ -1,14 +1,23 @@
-%% Retrieve unit flow from simulation
-[fname, pname]  = uigetfile({['..\..\..\Data\UFinch\HR02\FlowData\Model\','.mat']},...
-    'Load Matlab File of Unit Flows from UFinch Simulation');
-% Load the data file
-load([pname,fname]);
-%
 %% Select computed daily mean flows from 
 % 01636500 Shenandoah River at Millville, WV
+clearvars;
 selGageNo   = 01636500;
 selGageName = 'Shenandoah River at Millville, WV';
 selComID    = 8445070;
+%
+%% Retrieve unit flow from simulation
+[fname, pname]  = uigetfile({['..\..\..\Data\UFinch\HR02\FlowData\Model\','.mat']},...
+    'Load Matlab File of Unit Flows from UFinch Simulation');
+% List variables in target mat file
+whos(matfile(fullfile(pname,fname)))
+% Load flow data for all ComIDs
+load(fullfile(pname,fname));
+%
+clearvars -except pname fname selGageNo selGageName selComID
+% Load the tartet simulated unit flows
+load(fullfile(pname,fname), '-regexp', '^C8445070')
+% Load anxillary variables
+load(fullfile(pname,fname), '-regexp', '[HSefghmnopst*]')
 %
 % Get daily flows from NWIS retrieval 
 [fname1, pname1]  = uigetfile({['..\HR02\FlowData\',...
@@ -39,7 +48,7 @@ fprintf(1,'For %u %s at ComID %u, the travel time is %u 15-min intervals.\n',...
 vYrMoDaHrMn  = sYrMoDaHrMn:1/96:eYrMoDaHrMn;
 %% Plot times series
 figure(1); clf(1); 
-travTime15 = 130;                    % ADJUST travTime15 TO MATCH 
+travTime15 = 120;                    % ADJUST travTime15 TO MATCH 
 travTime = round(11/3*travTime15); 
 semilogy(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),'r-');
 datetick('x');
@@ -49,10 +58,47 @@ title(['Flows at ',num2str(selGageNo),' ',selGageName]);
 semilogy(tStreamgage.Date+0.5,tStreamgage.flow,'b-');
 ylabel('Streamflow, in cubic feet per second');
 xlabel('Water Year');
-legend('UFINCH','Measured');
 text(datenum(2006,6,1),150,{'Computed Daily Mean Flows Plotted at Noon.',...
     'UFINCH Noon Flows Plotted from 15-min Values.'});
 %
+%% Compute daily means from 15-min unit data
+% Compute year vector
+dateNum        = floor(datenum(vYrMoDaHrMn(1:end-travTime)));
+% Compute group statistics by day
+tic
+[dailyMean,dailyNumel,dailySem] = grpstats(uQUfinch(1+travTime:end),dateNum,...
+    {'mean','numel','sem'});
+toc
+semilogy(unique(dateNum)+.5,dailyMean,'c-');
+legend('unit UFINCH','daily Measured','daily UFINCH');
+%
+%% Plot time references
+figure(3); clf(3);
+loglog(tStreamgage.flow,dailyMean,'b+');
+logFlowResid = log10(dailyMean)-log10(tStreamgage.flow);
+%
+figure(3); clf(3);
+plot(tStreamgage.Date+0.5,logFlowResid,'b-');
+datetick('x');
+ident
+acf(logFlowResid,10)
+
+% Compute x_t - (x_t-1 + x_t+1)/2
+x1 = zeros(length(dailyMean),1);
+for t = 2:length(dailyMean)-1
+    x1(t) = log10(dailyMean(t)) - 0.5 * (log10(dailyMean(t-1)) + log10(dailyMean(t+1)));
+end
+
+figure(4); clf(4);
+plot(x1,logFlowResid,'b.');
+[b,bint,r,rint,stats] = regress(logFlowResid,[ones(length(x1),1),x1]);
+
+
+
+
+
+
+
 %% Plot quantiles
 % figure(2); clf(2); 
 % qqplot(log10(tStreamgage.flow),log10(uQUfinch(1+travTime:end)));
@@ -61,7 +107,7 @@ text(datenum(2006,6,1),150,{'Computed Daily Mean Flows Plotted at Noon.',...
 % xlabel('Quantiles of log_{10}Computed Daily Mean Flows at Streamgage');
 % ylabel('Quantiles of log_{10}Simulated Unit Flows by UFINCH');
 % title(['Quantile-Quantile Plot of Measured Daily with UFINCH Unit Flows at',num2str(selGageNo),' ',selGageName]); 
-%% Plot Relation Between Measurd and UFINCH flow series
+%% Plot Relation Between Measurd and UFINCH flow series at noon
 dQUfinch      = interp1(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),...
                   tStreamgage.Date+0.5,'pchip');
 ndx           = find(dQUfinch <= 0);
@@ -76,6 +122,11 @@ ylabel('UFINCH Noon Streamflow, in log_{10} cubic feet per second');
 h1 = legend('Location','NorthWest',{'Line of Agreement','01636500 (DArea 3041 mi^2)'});
 pause()
 set(h1,'visible','off'); delete(h1);
+%
+%% Model the dynamics of daily flow errors
+
+
+
 %
 %% Select computed daily mean flows from 
 selGageNo   = 01631000;
@@ -109,9 +160,9 @@ fprintf(1,'For %u %s at ComID %u, the travel time is %u 15-min intervals.\n',...
 % Form timedate vector for UFINCH flows
 vYrMoDaHrMn  = sYrMoDaHrMn:1/96:eYrMoDaHrMn;
 %% Plot times series
-figure(3); clf(3); 
-travTime15 = 130;                    % ADJUST travTime15 TO MATCH 
-travTime = round(11/3*travTime15); 
+figure(2); clf(2); 
+travTime15 = 110 ;   % travTime15 adjusted from 101 to match peaks  
+travTime = round(travTime15 * 11/3); 
 semilogy(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),'r-');
 datetick('x');
 hold on
@@ -171,8 +222,8 @@ fprintf(1,'For %u %s at ComID %u, the travel time is %u 15-min intervals.\n',...
 % Form timedate vector for UFINCH flows
 vYrMoDaHrMn  = sYrMoDaHrMn:1/96:eYrMoDaHrMn;
 %% Plot times series
-figure(4); clf(4); 
-travTime15 = 130;                    % ADJUST travTime15 TO MATCH 
+figure(2); clf(2); 
+travTime15 = 110;                    % ADJUST travTime15 TO MATCH 
 travTime = round(11/3*travTime15); 
 semilogy(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),'r-');
 datetick('x');
@@ -233,7 +284,7 @@ fprintf(1,'For %u %s at ComID %u, the travel time is %u 15-min intervals.\n',...
 % Form timedate vector for UFINCH flows
 vYrMoDaHrMn  = sYrMoDaHrMn:1/96:eYrMoDaHrMn;
 %% Plot times series
-figure(5); clf(5); 
+figure(2); clf(2); 
 travTime15 = 110;                    % ADJUST travTime15 TO MATCH 
 travTime = round(11/3*travTime15); 
 semilogy(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),'r-');
@@ -296,8 +347,8 @@ fprintf(1,'For %u %s at ComID %u, the travel time is %u 15-min intervals.\n',...
 % Form timedate vector for UFINCH flows
 vYrMoDaHrMn  = sYrMoDaHrMn:1/96:eYrMoDaHrMn;
 %% Plot times series
-figure(5); clf(5); 
-travTime15 = 110;                    % ADJUST travTime15 TO MATCH 
+figure(2); clf(2); 
+travTime15 = 120;                    % ADJUST travTime15 TO MATCH 
 travTime = round(11/3*travTime15); 
 semilogy(vYrMoDaHrMn(1:end-travTime),uQUfinch(1+travTime:end),'r-');
 datetick('x');
@@ -843,6 +894,11 @@ title(['Relation Between Measured and UFINCH Flows at ',num2str(selGageNo),' ',s
 %% Fit residuals to a function
 % Compute residuals
 residQUfinch = log10(dQUfinch) - log10(tStreamgage.flow);
+figure(2); clf(2);
+plot(ksdensity(residQUfinch))
+
+
+
 ldQUfinch    = log10(dQUfinch);
 ldQMeasure   = log10(tStreamgage.flow);
 % plot relation

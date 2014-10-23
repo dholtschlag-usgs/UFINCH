@@ -7,19 +7,19 @@
 % Read in the nhd geometry data
 clearvars -except fname pname
 headerlinesIn = 1; delimiterIn = ',';
-nhdMatrix     = importdata([pname,fname],delimiterIn,headerlinesIn);
+nhdStruct     = importdata([pname,fname],delimiterIn,headerlinesIn);
 % Identify column contents by header
-ndxComID = find(strncmpi(nhdMatrix.colheaders,'ComID',     length('ComID')));
-ndxLenKm = find(strncmpi(nhdMatrix.colheaders,'LengthKm',  length('LengthKm')));
-ndxFNode = find(strncmpi(nhdMatrix.colheaders,'FromNode',  length('FromNode')));
-ndxTNode = find(strncmpi(nhdMatrix.colheaders,'ToNode',    length('ToNode')));
-ndxHSequ = find(strncmpi(nhdMatrix.colheaders,'HydroSeq',  length('HydroSeq')));
-ndxLPath = find(strncmpi(nhdMatrix.colheaders,'LevelPathI',length('LevelPathI')));
-ndxAreaM = find(strncmpi(nhdMatrix.colheaders,'AreaSqKm',  length('AreaSqKm')));
-ndxV001C = find(strncmpi(nhdMatrix.colheaders,'V0001C',    length('V0001C')));
-ndxV001E = find(strncmpi(nhdMatrix.colheaders,'V0001E',    length('V0001E')));
+ndxComID = find(strncmpi(nhdStruct.colheaders,'ComID',     length('ComID')));
+ndxLenKm = find(strncmpi(nhdStruct.colheaders,'LengthKm',  length('LengthKm')));
+ndxFNode = find(strncmpi(nhdStruct.colheaders,'FromNode',  length('FromNode')));
+ndxTNode = find(strncmpi(nhdStruct.colheaders,'ToNode',    length('ToNode')));
+ndxHSequ = find(strncmpi(nhdStruct.colheaders,'HydroSeq',  length('HydroSeq')));
+ndxLPath = find(strncmpi(nhdStruct.colheaders,'LevelPathI',length('LevelPathI')));
+ndxAreaM = find(strncmpi(nhdStruct.colheaders,'AreaSqKm',  length('AreaSqKm')));
+ndxV001C = find(strncmpi(nhdStruct.colheaders,'V0001C',    length('V0001C')));
+ndxV001E = find(strncmpi(nhdStruct.colheaders,'V0001E',    length('V0001E')));
 % Replace data structure with data.
-nhdMatrix           = nhdMatrix.data;
+nhdMatrix           = nhdStruct.data;
 % Sort rows of A by HydroSeq in decreasing (-) order.
 % A          = cell2mat(A);
 nhdMatrix  = sortrows(nhdMatrix,[ndxLPath,ndxHSequ]);
@@ -31,7 +31,7 @@ fprintf('%8.1f\n',max(AreaSqKm));
 V0001C     = nhdMatrix(:, ndxV001C);
 V0001E     = nhdMatrix(:, ndxV001E);
 % MaVelU is the mean velocity metric selected 
-MaVelU      = nhdMatrix(:, ndxV001C);
+MaVelU     = nhdMatrix(:, ndxV001C);
 % 
 FromNode   = nhdMatrix(:, ndxFNode);
 ToNode     = nhdMatrix(:, ndxTNode);
@@ -57,10 +57,11 @@ fprintf(1,'                                Flowline    Mean     time in   \n');
 fprintf(1,'                                length,in  velocity  15-min    \n');
 fprintf(1,'Index   LevelPathID    ComID    kilometers  ft/s     steps     \n');
 fprintf(1,[repmat('-',1,ndash),'\n']);
+velAdj = 2.0217;
 for i = 1:nFlowlines,
     % The constant 2.18723 converts 1*km/(1*fps * 5/3) into 15-min units
     % Experimentin with high (*2) velocity
-    ttFlowline(i) = max(1,floor(LengthKm(i) / (V0001C(i)*2) * 2.18723));
+    ttFlowline(i) = max(1,floor(LengthKm(i) / (V0001C(i)*velAdj) * 2.18723));
     fprintf(1,' %3u  %12u  %10u  %7.3f  %8.4f  %9.4f \n',...
         i,LevelPathI(i),ComID(i),LengthKm(i),V0001C(i),ttFlowline(i));
 end
@@ -171,7 +172,7 @@ fprintf(1,'%s \n',repmat('-',1,ndash));
 % sorted travel time in network vector
 sttNetwork = sort(ttNetwork);
 %
-% Generate equations: 
+%% Generate equations: 
 sBranchIDTable = sortrows(branchIDTable,'HydroSeq','descend');
 for i = 1:nFlowlines,
     % This statement takes care of one or more (convergent) flowlines with
@@ -205,6 +206,60 @@ for i = 1:nFlowlines,
         num2str(sBranchIDTable.AreaSqKm(i),'%9.4f'),...
         usFlowlines,';']);
 end
+%
+%% Write equations as matrix components and travel times
+for i = 1:nFlowlines,
+    % Identify convergent (length(ndxCon)>1) and connected flowlines
+    ndxCon = find(sBranchIDTable.FromNode(i) == sBranchIDTable.ToNode)  ;
+    % Identifies divergent branches (length(ndxDiv>1)) 
+    ndxDiv = find(sBranchIDTable.FromNode(i) == sBranchIDTable.FromNode);
+    % Set usFlowlines variable to empty
+    usFlowlines = [];
+%    if ~isempty(ndx)   
+% Uncomment the next four lines to get full output
+    fprintf(1,'%8u(%s) ',i,num2str(sBranchIDTable.ttNetwork(i),'%04u'));
+    if  isempty(ndxCon) && length(ndxDiv) == 1
+        fprintf(1,'\n');
+    end
+    if ~isempty(ndxCon) && length(ndxDiv) == 1 
+        for j = 1:length(ndxCon)
+%             if length(ndxCon)>1
+%                 fprintf(1,'HEY! More than one convergent line here!\n');
+%             end
+            % Uncomment next line to get full output
+            fprintf(1,'%8u(%s) ',ndxCon(j),num2str(sBranchIDTable.ttNetwork(ndxCon(j)),'%04u'));
+            usFlowlines = [usFlowlines,' + C',num2str(sBranchIDTable.ComID(ndxCon(j))),...
+                '(t - ',num2str(sBranchIDTable.ttNetwork(ndxCon(j)),'%04u'),')'];
+        end
+        % Uncomment next line to get full output
+       fprintf(1,'\n');
+    elseif ~isempty(ndxCon) && length(ndxDiv) > 1 
+        for j = 1:length(ndxCon)
+%             fprintf(1,'%s',['C',num2str(sBranchIDTable.ComID(i)),...
+%          '(t - ',num2str(sBranchIDTable.ttNetwork(i),'%04u'),') <- ']);
+%             fprintf(1,'C%u(%04u)/%u. || ',sBranchIDTable.ComID(ndxCon(j)),...
+%                 sBranchIDTable.ttNetwork(ndxCon(j)),length(ndxDiv));
+                
+%             fprintf(1,'%6u %6u C%s(t - %s) / %s. \n',i,ndxCon(j),...
+%                 num2str(sBranchIDTable.ComID(ndxCon(j)),'%04u'),...
+%                 num2str(sBranchIDTable.ttNetwork(ndxCon(j)),'%04u'),...
+%                 num2str(length(ndxDiv),'%u'));
+            fprintf(1,'%8u(%04u) %8u(%04u)/%u.\n',i,sBranchIDTable.ttNetwork(i),...
+                 ndxCon(j),sBranchIDTable.ttNetwork(ndxCon(j)),length(ndxDiv));
+%             usFlowlines = [usFlowlines,' + C',num2str(sBranchIDTable.ComID(ndxCon(j))),...
+%                 '(t - ',num2str(sBranchIDTable.ttNetwork(ndxCon(j)),'%04u'),')' , ...
+%                 ' * 1/',num2str(length(ndxDiv),'%u')];
+        end        
+    end
+    % This statement takes care of two or more divergent flowlines
+    
+%     fprintf(1,'%s \n',['C',num2str(sBranchIDTable.ComID(i)),...
+%         '(t - ',num2str(sBranchIDTable.ttNetwork(i),'%04u'),') = Ylds',...
+%         '(t - ',num2str(sBranchIDTable.ttNetwork(i),'%04u'),') * ',...
+%         num2str(sBranchIDTable.AreaSqKm(i),'%9.4f'),...
+%         usFlowlines,';']);
+end
+
 
             
         
